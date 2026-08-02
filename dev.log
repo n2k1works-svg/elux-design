@@ -1,0 +1,32 @@
+▲ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://21.0.19.62:3000
+- Environments: .env
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 716ms
+○ Compiling / ...
+ GET / 200 in 3.8s (compile: 3.6s, render: 174ms)
+ GET / 200 in 57ms (compile: 3ms, render: 54ms)
+ GET / 200 in 48ms (compile: 3ms, render: 45ms)
+ GET / 200 in 42ms (compile: 2ms, render: 40ms)
+prisma:query SELECT `main`.`SiteSettings`.`id`, `main`.`SiteSettings`.`phone`, `main`.`SiteSettings`.`email`, `main`.`SiteSettings`.`location`, `main`.`SiteSettings`.`facebook`, `main`.`SiteSettings`.`instagram`, `main`.`SiteSettings`.`linkedin`, `main`.`SiteSettings`.`adminPassword`, `main`.`SiteSettings`.`updatedAt` FROM `main`.`SiteSettings` WHERE (`main`.`SiteSettings`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query SELECT `main`.`Testimonial`.`id`, `main`.`Testimonial`.`quote`, `main`.`Testimonial`.`name`, `main`.`Testimonial`.`role`, `main`.`Testimonial`.`active`, `main`.`Testimonial`.`order`, `main`.`Testimonial`.`createdAt`, `main`.`Testimonial`.`updatedAt` FROM `main`.`Testimonial` WHERE `main`.`Testimonial`.`active` = ? ORDER BY `main`.`Testimonial`.`order` ASC, `main`.`Testimonial`.`createdAt` DESC LIMIT ? OFFSET ?
+prisma:query SELECT `main`.`Project`.`id`, `main`.`Project`.`title`, `main`.`Project`.`location`, `main`.`Project`.`category`, `main`.`Project`.`description`, `main`.`Project`.`image`, `main`.`Project`.`order`, `main`.`Project`.`active`, `main`.`Project`.`createdAt`, `main`.`Project`.`updatedAt` FROM `main`.`Project` WHERE `main`.`Project`.`active` = ? ORDER BY `main`.`Project`.`order` ASC, `main`.`Project`.`createdAt` DESC LIMIT ? OFFSET ?
+ GET /api/projects 200 in 760ms (compile: 633ms, render: 126ms)
+ GET /api/settings 200 in 727ms (compile: 661ms, render: 66ms)
+ GET /api/testimonials 200 in 759ms (compile: 718ms, render: 40ms)
+ GET / 200 in 44ms (compile: 2ms, render: 41ms)
+prisma:query SELECT `main`.`Testimonial`.`id`, `main`.`Testimonial`.`quote`, `main`.`Testimonial`.`name`, `main`.`Testimonial`.`role`, `main`.`Testimonial`.`active`, `main`.`Testimonial`.`order`, `main`.`Testimonial`.`createdAt`, `main`.`Testimonial`.`updatedAt` FROM `main`.`Testimonial` WHERE `main`.`Testimonial`.`active` = ? ORDER BY `main`.`Testimonial`.`order` ASC, `main`.`Testimonial`.`createdAt` DESC LIMIT ? OFFSET ?
+ GET /api/testimonials 200 in 11ms (compile: 3ms, render: 8ms)
+ GET /api/projects 200 in 11ms (compile: 6ms, render: 5ms)
+prisma:query SELECT `main`.`Project`.`id`, `main`.`Project`.`title`, `main`.`Project`.`location`, `main`.`Project`.`category`, `main`.`Project`.`description`, `main`.`Project`.`image`, `main`.`Project`.`order`, `main`.`Project`.`active`, `main`.`Project`.`createdAt`, `main`.`Project`.`updatedAt` FROM `main`.`Project` WHERE `main`.`Project`.`active` = ? ORDER BY `main`.`Project`.`order` ASC, `main`.`Project`.`createdAt` DESC LIMIT ? OFFSET ?
+prisma:query SELECT `main`.`SiteSettings`.`id`, `main`.`SiteSettings`.`phone`, `main`.`SiteSettings`.`email`, `main`.`SiteSettings`.`location`, `main`.`SiteSettings`.`facebook`, `main`.`SiteSettings`.`instagram`, `main`.`SiteSettings`.`linkedin`, `main`.`SiteSettings`.`adminPassword`, `main`.`SiteSettings`.`updatedAt` FROM `main`.`SiteSettings` WHERE (`main`.`SiteSettings`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+ GET /api/settings 200 in 4ms (compile: 1257µs, render: 3ms)
+ POST /api/contact 500 in 199ms (compile: 192ms, render: 7ms)
+ POST /api/contact 500 in 21ms (compile: 17ms, render: 5ms)
