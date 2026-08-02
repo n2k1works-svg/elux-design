@@ -808,27 +808,26 @@ function TestimonialsSection() {
 
         <div className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <div className="relative">
-          <div className="liquid-glass-strong rounded-2xl p-8 md:p-12 relative overflow-hidden">
-            <div className="quote-mark">&ldquo;</div>
-
-            {/* Left Arrow */}
+            {/* Left Arrow */ }
             <button
               onClick={() => goTo((active - 1 + testimonials.length) % testimonials.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full liquid-glass-subtle border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/60 transition-all duration-300 cursor-pointer"
+              className="absolute left-0 md:-left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full liquid-glass-subtle border border-[#C9A84C]/40 flex items-center justify-center text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/70 hover:scale-110 transition-all duration-300 cursor-pointer"
               aria-label="Previous testimonial"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
 
             {/* Right Arrow */}
             <button
               onClick={() => goTo((active + 1) % testimonials.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full liquid-glass-subtle border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/60 transition-all duration-300 cursor-pointer"
+              className="absolute right-0 md:-right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full liquid-glass-subtle border border-[#C9A84C]/40 flex items-center justify-center text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/70 hover:scale-110 transition-all duration-300 cursor-pointer"
               aria-label="Next testimonial"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
 
+          <div className="liquid-glass-strong rounded-2xl p-8 md:p-12 relative overflow-hidden">
+            <div className="quote-mark">&ldquo;</div>
             <div className="overflow-hidden">
               <div className="testimonial-track" style={{ transform: `translateX(-${active * 100}%)` }}>
                 {testimonials.map((t, i) => (
