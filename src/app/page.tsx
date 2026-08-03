@@ -620,6 +620,8 @@ function ProjectsSection() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectT[]>(FALLBACK_PROJECTS);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const PER_PAGE_DESKTOP = 3;
 
   useEffect(() => {
     let cancelled = false;
@@ -635,6 +637,15 @@ function ProjectsSection() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(projects.length / PER_PAGE_DESKTOP));
+  const goToPage = (p: number) => {
+    if (p < 0) p = totalPages - 1;
+    if (p >= totalPages) p = 0;
+    setPage(p);
+    setSelectedProject(null);
+  };
+  const desktopProjects = projects.slice(page * PER_PAGE_DESKTOP, (page + 1) * PER_PAGE_DESKTOP);
 
   return (
     <>
@@ -652,7 +663,7 @@ function ProjectsSection() {
             <div className="section-divider w-24 mx-auto mt-6" />
           </div>
 
-          {/* Mobile: horizontal scroll  |  Desktop: grid */}
+          {/* Mobile: horizontal scroll */}
           <div className="md:hidden flex gap-5 overflow-x-auto projects-scroll-mobile pb-4 snap-x snap-mandatory -mx-6 px-6">
             {loading && projects.length === 0 ? (
               <div className="min-w-[280px] h-[420px] rounded-2xl liquid-glass animate-pulse" />
@@ -669,24 +680,63 @@ function ProjectsSection() {
             ))}
           </div>
 
-          <div className="hidden md:grid md:grid-cols-3 gap-6">
-            {loading && projects.length === 0 ? (
-              <>
-                <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
-                <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
-                <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
-              </>
-            ) : null}
-            {projects.map((project, i) => (
+          {/* Desktop: carousel with arrows */}
+          <div className="hidden md:block">
+            <div className="overflow-hidden">
               <div
-                key={project.id}
-                className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} ${loading ? "animate-pulse" : ""}`}
-                style={{ transitionDelay: `${(i + 1) * 150}ms` }}
-                onClick={() => setSelectedProject(selectedProject === i ? null : i)}
+                className="grid grid-cols-3 gap-6 transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${page * 100}%)` }}
               >
-                <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={setLightboxImage} />
+                {loading && projects.length === 0 ? (
+                  <>
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
+                  </>
+                ) : null}
+                {projects.map((project, i) => (
+                  <div
+                    key={project.id}
+                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 ${loading ? "animate-pulse" : ""}`}
+                    onClick={() => setSelectedProject(selectedProject === i ? null : i)}
+                  >
+                    <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={setLightboxImage} />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Navigation: arrows + page counter */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-5 mt-10">
+                <button
+                  onClick={() => goToPage(page - 1)}
+                  className="w-10 h-10 rounded-full border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C]/70 hover:text-[#C9A84C] hover:border-[#C9A84C]/60 hover:bg-[#C9A84C]/10 transition-all duration-300 cursor-pointer"
+                  aria-label="Previous projects"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goToPage(i)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${i === page ? "bg-[#C9A84C] w-6" : "bg-[#C9A84C]/30 hover:bg-[#C9A84C]/50"}`}
+                      aria-label={`Go to page ${i + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => goToPage(page + 1)}
+                  className="w-10 h-10 rounded-full border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C]/70 hover:text-[#C9A84C] hover:border-[#C9A84C]/60 hover:bg-[#C9A84C]/10 transition-all duration-300 cursor-pointer"
+                  aria-label="Next projects"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
