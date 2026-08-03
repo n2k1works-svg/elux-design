@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       : `[Elux Design] New Inquiry from ${String(name)}`;
 
     const { error } = await resend.emails.send({
-      from: "Elux Design Website <onboarding@resend.dev>",
+      from: "Elux Design Website <noreply@eluxfiji.com>",
       to: toEmail,
       replyTo: String(email),
       subject: subjectLine,
