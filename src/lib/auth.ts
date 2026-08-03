@@ -53,24 +53,35 @@ export async function isAuthenticated(): Promise<boolean> {
  * Attempt to log in. Returns true if password matches.
  * On success, sets the auth cookie.
  */
-export async function login(password: string): Promise<{ success: boolean; token?: string }> {
-  let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
-  if (!settings) {
-    settings = await db.siteSettings.create({ data: { id: "main" } });
+export async function login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
+  try {
+    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    if (!settings) {
+      settings = await db.siteSettings.create({ data: { id: "main" } });
+    }
+    if (password !== settings.adminPassword) {
+      return { success: false, error: "Invalid password." };
+    }
+    const token = encodeToken(Date.now());
+    try {
+      const cookieStore = await cookies();
+      cookieStore.set(COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: TOKEN_TTL_MS / 1000,
+      });
+    } catch (cookieErr) {
+      console.error("Cookie set error:", cookieErr);
+      // Return token even if cookie fails — frontend can handle it
+      return { success: true, token };
+    }
+    return { success: true, token };
+  } catch (dbErr) {
+    console.error("Login DB error:", dbErr);
+    return { success: false, error: "Database error during login." };
   }
-  if (password !== settings.adminPassword) {
-    return { success: false };
-  }
-  const token = encodeToken(Date.now());
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: TOKEN_TTL_MS / 1000,
-  });
-  return { success: true, token };
 }
 
 /**

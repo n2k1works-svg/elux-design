@@ -19,10 +19,12 @@ export async function POST(req: NextRequest) {
     }
     const result = await login(password);
     if (!result.success) {
-      return NextResponse.json({ success: false, error: "Invalid password." }, { status: 401 });
+      const errorMsg = result.error || "Invalid password.";
+      return NextResponse.json({ success: false, error: errorMsg }, { status: 401 });
     }
     return NextResponse.json({ success: true, token: result.token });
   } catch (err) {
+    console.error("Auth POST error:", err);
     return NextResponse.json(
       { success: false, error: "Authentication failed." },
       { status: 500 },
