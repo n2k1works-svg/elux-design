@@ -645,7 +645,7 @@ function ProjectsSection() {
     setPage(p);
     setSelectedProject(null);
   };
-  const desktopProjects = projects.slice(page * PER_PAGE_DESKTOP, (page + 1) * PER_PAGE_DESKTOP);
+  // All projects rendered in a single flex row — carousel handles visibility
 
   return (
     <>
@@ -680,24 +680,25 @@ function ProjectsSection() {
             ))}
           </div>
 
-          {/* Desktop: carousel with arrows */}
+          {/* Desktop: sliding carousel — 3 cards per page */}
           <div className="hidden md:block">
             <div className="overflow-hidden">
               <div
-                className="grid grid-cols-3 gap-6 transition-transform duration-500 ease-in-out"
+                className="flex gap-6 transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${page * 100}%)` }}
               >
                 {loading && projects.length === 0 ? (
                   <>
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse" />
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
+                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
                   </>
                 ) : null}
                 {projects.map((project, i) => (
                   <div
                     key={project.id}
-                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 ${loading ? "animate-pulse" : ""}`}
+                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 flex-shrink-0 ${loading ? "animate-pulse" : ""}`}
+                    style={{ width: 'calc(33.333% - 1rem)' }}
                     onClick={() => setSelectedProject(selectedProject === i ? null : i)}
                   >
                     <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={setLightboxImage} />
