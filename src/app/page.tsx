@@ -1159,7 +1159,6 @@ function AdminLogin({ onSuccess, onClose }: { onSuccess: () => void; onClose: ()
             <button type="button" onClick={onClose} className="text-xs text-[#8A8478] hover:text-[#C9A84C] transition-colors">
               &larr; Back to site
             </button>
-            <span className="text-[0.65rem] text-[#8A8478]/60 font-light">Default: elux2026</span>
           </div>
         </form>
       </div>
