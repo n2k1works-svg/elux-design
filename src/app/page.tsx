@@ -456,10 +456,7 @@ function HeroSection() {
           </div>
         </div>
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-fade-in-up animate-delay-500">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[0.6rem] tracking-[0.3em] uppercase text-[#8A8478]/50">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-[#C9A84C]/50 to-transparent" />
-        </div>
+        <div className="w-px h-12 bg-gradient-to-b from-[#C9A84C]/50 to-transparent" />
       </div>
     </section>
   );
