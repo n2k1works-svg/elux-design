@@ -38,6 +38,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-[#0A0A0A] text-[#F5F0E8]">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var u=navigator.userAgent;if(/SamsungBrowser/i.test(u)||(/Android/i.test(u)&&/Version\/\d\.\d/i.test(u)&&!/Chrome/i.test(u))){document.documentElement.classList.add('poor-shimmer')}})()`,
+          }}
+        />
         {children}
         <Toaster />
       </body>

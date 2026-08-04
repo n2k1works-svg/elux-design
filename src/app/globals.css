@@ -183,14 +183,13 @@
   animation: shimmer 4s ease-in-out infinite;
 }
 
-/* Fallback for browsers that render shimmer poorly (Samsung, older Android) */
-@supports not (background-clip: text) {
-  .gold-shimmer {
-    color: #C9A84C;
-    -webkit-text-fill-color: #C9A84C;
-    background: none;
-    animation: none;
-  }
+/* Fallback for browsers that render background-clip: text poorly (Samsung Internet, some Android WebViews)
+   This class is applied via JS user-agent detection in the inline <script> tag */
+.poor-shimmer .gold-shimmer {
+  color: #C9A84C;
+  -webkit-text-fill-color: #C9A84C;
+  background: none;
+  animation: none;
 }
 
 /* Disable shimmer animation on mobile — show clean solid gold */
