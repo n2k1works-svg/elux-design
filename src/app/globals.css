@@ -164,6 +164,7 @@
 
 /* === GOLD SHIMMER EFFECT === */
 .gold-shimmer {
+  color: #C9A84C;
   background: linear-gradient(
     110deg,
     #C9A84C 0%,
@@ -177,6 +178,14 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: shimmer 4s ease-in-out infinite;
+}
+
+@supports not (background-clip: text) {
+  .gold-shimmer {
+    color: #C9A84C;
+    -webkit-text-fill-color: #C9A84C;
+    background: none;
+  }
 }
 
 @keyframes shimmer {
