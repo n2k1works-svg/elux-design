@@ -106,6 +106,9 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   html {
     scroll-behavior: smooth;
@@ -180,11 +183,23 @@
   animation: shimmer 4s ease-in-out infinite;
 }
 
+/* Fallback for browsers that render shimmer poorly (Samsung, older Android) */
 @supports not (background-clip: text) {
   .gold-shimmer {
     color: #C9A84C;
     -webkit-text-fill-color: #C9A84C;
     background: none;
+    animation: none;
+  }
+}
+
+/* Disable shimmer animation on mobile — show clean solid gold */
+@media (max-width: 768px) {
+  .gold-shimmer {
+    color: #C9A84C;
+    -webkit-text-fill-color: #C9A84C;
+    background: none;
+    animation: none;
   }
 }
 
