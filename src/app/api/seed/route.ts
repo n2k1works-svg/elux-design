@@ -80,59 +80,59 @@ const SEED_SERVICES = [
   },
 ];
 
+async function seed() {
+  const result: Record<string, boolean> = {};
+
+  try {
+    await db.siteSettings.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
+    result.settings = true;
+  } catch (e) { console.error("Seed settings error:", e); }
+
+  try {
+    const count = await db.project.count();
+    if (count === 0) {
+      for (const p of SEED_PROJECTS) await db.project.create({ data: p });
+    }
+    result.projects = true;
+  } catch (e) { console.error("Seed projects error:", e); }
+
+  try {
+    const count = await db.testimonial.count();
+    if (count === 0) {
+      for (const t of SEED_TESTIMONIALS) await db.testimonial.create({ data: t });
+    }
+    result.testimonials = true;
+  } catch (e) { console.error("Seed testimonials error:", e); }
+
+  try {
+    const count = await db.service.count();
+    if (count === 0) {
+      for (const s of SEED_SERVICES) await db.service.create({ data: s });
+    }
+    result.services = true;
+  } catch (e) { console.error("Seed services error:", e); }
+
+  try {
+    await db.aboutContent.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
+    result.about = true;
+  } catch (e) { console.error("Seed about error:", e); }
+
+  return result;
+}
+
 export async function POST() {
   try {
-    if (process.env.NODE_ENV === "production") {
-      const authed = await isAuthenticated();
-      if (!authed) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    const authed = await isAuthenticated();
+    if (!authed) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
-    const result: Record<string, boolean> = {};
-
-    // Settings
-    try {
-      await db.siteSettings.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
-      result.settings = true;
-    } catch (e) { console.error("Seed settings error:", e); }
-
-    // Projects
-    try {
-      const count = await db.project.count();
-      if (count === 0) {
-        for (const p of SEED_PROJECTS) await db.project.create({ data: p });
-      }
-      result.projects = true;
-    } catch (e) { console.error("Seed projects error:", e); }
-
-    // Testimonials
-    try {
-      const count = await db.testimonial.count();
-      if (count === 0) {
-        for (const t of SEED_TESTIMONIALS) await db.testimonial.create({ data: t });
-      }
-      result.testimonials = true;
-    } catch (e) { console.error("Seed testimonials error:", e); }
-
-    // Services
-    try {
-      const count = await db.service.count();
-      if (count === 0) {
-        for (const s of SEED_SERVICES) await db.service.create({ data: s });
-      }
-      result.services = true;
-    } catch (e) { console.error("Seed services error:", e); }
-
-    // About
-    try {
-      await db.aboutContent.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
-      result.about = true;
-    } catch (e) { console.error("Seed about error:", e); }
-
+    const result = await seed();
     return NextResponse.json({ success: true, result });
   } catch (err) {
-    return NextResponse.json({ error: "Seeding failed.", detail: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Seeding failed." }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return POST();
+  return NextResponse.json({ error: "Not found." }, { status: 404 });
 }

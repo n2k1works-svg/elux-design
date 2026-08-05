@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -80,18 +80,20 @@ export async function PATCH(req: Request) {
     if (!settings) {
       settings = await db.siteSettings.create({ data: { id: "main" } });
     }
-    if (currentPassword !== settings.adminPassword) {
+    const valid = await verifyPassword(currentPassword, settings.adminPassword || "");
+    if (!valid) {
       return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
     }
-    if (newPassword.length < 4) {
+    if (newPassword.length < 8) {
       return NextResponse.json(
-        { error: "New password must be at least 4 characters." },
+        { error: "New password must be at least 8 characters." },
         { status: 400 },
       );
     }
+    const hash = await hashPassword(newPassword);
     await db.siteSettings.update({
       where: { id: "main" },
-      data: { adminPassword: newPassword },
+      data: { adminPassword: hash },
     });
     return NextResponse.json({ success: true });
   } catch (err) {

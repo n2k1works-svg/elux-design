@@ -1,17 +1,36 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// Allow 3 contact form submissions per IP per hour
+const CONTACT_LIMIT = 3;
+const CONTACT_WINDOW_MS = 60 * 60 * 1000;
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    if (!rateLimit(ip, CONTACT_LIMIT, CONTACT_WINDOW_MS)) {
+      return NextResponse.json(
+        { error: "Too many messages. Please try again later." },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const { name, email, subject, message } = body;
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: "Name, email, and message are required." }, { status: 400 });
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(email))) {
+      return NextResponse.json({ error: "Please provide a valid email address." }, { status: 400 });
     }
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -22,19 +41,19 @@ export async function POST(req: Request) {
 
     const resend = new Resend(apiKey);
 
-    const safeName = esc(String(name));
-    const safeEmail = esc(String(email));
-    const safeSubject = esc(String(subject || ""));
-    const safeMessage = esc(String(message));
+    const safeName = esc(String(name).slice(0, 200));
+    const safeEmail = esc(String(email).slice(0, 200));
+    const safeSubject = esc(String(subject || "").slice(0, 200));
+    const safeMessage = esc(String(message).slice(0, 5000));
 
     const subjectLine = subject
-      ? `[Elux Design] ${String(subject)} — from ${String(name)}`
-      : `[Elux Design] New Inquiry from ${String(name)}`;
+      ? `[Elux Design] ${String(subject).slice(0, 200)} — from ${String(name).slice(0, 100)}`
+      : `[Elux Design] New Inquiry from ${String(name).slice(0, 100)}`;
 
     const { error } = await resend.emails.send({
       from: "Elux Design Website <noreply@eluxfiji.com>",
       to: toEmail,
-      replyTo: String(email),
+      replyTo: String(email).slice(0, 200),
       subject: subjectLine,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

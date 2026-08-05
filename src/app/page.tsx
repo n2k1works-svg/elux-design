@@ -1983,8 +1983,8 @@ function AdminPasswordTab() {
       showToast("New passwords do not match.", "error");
       return;
     }
-    if (next.length < 4) {
-      showToast("New password must be at least 4 characters.", "error");
+    if (next.length < 8) {
+      showToast("New password must be at least 8 characters.", "error");
       return;
     }
     setSaving(true);

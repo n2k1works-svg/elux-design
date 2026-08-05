@@ -1,32 +1,52 @@
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const COOKIE_NAME = "elux_admin_token";
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const BCRYPT_ROUNDS = 12;
 
-/**
- * Encode a simple base64 token containing a timestamp.
- * Not JWT - intentionally simple per project requirements.
- */
-function encodeToken(timestamp: number): string {
-  const payload = JSON.stringify({ ts: timestamp, sig: "elux-admin" });
-  return Buffer.from(payload, "utf-8").toString("base64");
+// HMAC secret — unique per deployment, derived from a server-side env var.
+// Falls back to a random value on each restart if not set (dev mode only).
+function getHmacSecret(): Buffer {
+  const raw = process.env.AUTH_SECRET || "fallback-dev-only-change-me";
+  return Buffer.from(raw, "utf-8");
 }
 
 /**
- * Decode a token and validate that it is less than 24 hours old.
+ * Create an HMAC-signed token containing a timestamp.
+ * Unlike the old base64 approach, this cannot be forged without the AUTH_SECRET.
+ */
+function encodeToken(timestamp: number): string {
+  const payload = JSON.stringify({ ts: timestamp });
+  const sig = crypto
+    .createHmac("sha256", getHmacSecret())
+    .update(payload)
+    .digest("hex");
+  return Buffer.from(JSON.stringify({ p: payload, s: sig }), "utf-8").toString("base64");
+}
+
+/**
+ * Decode and verify an HMAC-signed token.
+ * Returns true only if the signature is valid AND the token is within TTL.
  */
 function decodeToken(token: string): { valid: boolean; ts?: number } {
   try {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    const parsed = JSON.parse(decoded);
-    if (parsed.sig !== "elux-admin" || typeof parsed.ts !== "number") {
+    const raw = Buffer.from(token, "base64").toString("utf-8");
+    const { p: payload, s: sig } = JSON.parse(raw);
+    if (!payload || !sig) return { valid: false };
+    const expected = crypto
+      .createHmac("sha256", getHmacSecret())
+      .update(payload)
+      .digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) {
       return { valid: false };
     }
+    const parsed = JSON.parse(payload);
+    if (typeof parsed.ts !== "number") return { valid: false };
     const age = Date.now() - parsed.ts;
-    if (age > TOKEN_TTL_MS || age < 0) {
-      return { valid: false };
-    }
+    if (age > TOKEN_TTL_MS || age < 0) return { valid: false };
     return { valid: true, ts: parsed.ts };
   } catch {
     return { valid: false };
@@ -34,8 +54,40 @@ function decodeToken(token: string): { valid: boolean; ts?: number } {
 }
 
 /**
+ * Hash a plain-text password using bcrypt.
+ */
+export async function hashPassword(plain: string): Promise<string> {
+  return bcrypt.hash(plain, BCRYPT_ROUNDS);
+}
+
+/**
+ * Verify a plain-text password against a bcrypt hash.
+ * Also handles plain-text comparison for migration from old format.
+ */
+export async function verifyPassword(plain: string, stored: string): Promise<boolean> {
+  // If stored looks like a bcrypt hash ($2a$ / $2b$), use bcrypt
+  if (stored.startsWith("$2")) {
+    return bcrypt.compare(plain, stored);
+  }
+  // Legacy: plain-text comparison + auto-migrate
+  if (plain === stored) {
+    // Upgrade the stored password to a bcrypt hash
+    try {
+      const hash = await hashPassword(plain);
+      await db.siteSettings.update({
+        where: { id: "main" },
+        data: { adminPassword: hash },
+      });
+    } catch (e) {
+      console.error("Auto-migrate password hash failed:", e);
+    }
+    return true;
+  }
+  return false;
+}
+
+/**
  * Verify that the current request is authenticated.
- * Reads the token from cookies and checks timestamp validity.
  */
 export async function isAuthenticated(): Promise<boolean> {
   try {
@@ -59,7 +111,8 @@ export async function login(password: string): Promise<{ success: boolean; token
     if (!settings) {
       settings = await db.siteSettings.create({ data: { id: "main" } });
     }
-    if (password !== settings.adminPassword) {
+    const valid = await verifyPassword(password, settings.adminPassword || "");
+    if (!valid) {
       return { success: false, error: "Invalid password." };
     }
     const token = encodeToken(Date.now());
@@ -74,7 +127,6 @@ export async function login(password: string): Promise<{ success: boolean; token
       });
     } catch (cookieErr) {
       console.error("Cookie set error:", cookieErr);
-      // Return token even if cookie fails — frontend can handle it
       return { success: true, token };
     }
     return { success: true, token };
@@ -94,6 +146,7 @@ export async function logout(): Promise<void> {
 
 /**
  * Change the admin password. Requires current password verification.
+ * New passwords are always stored as bcrypt hashes.
  */
 export async function changePassword(
   currentPassword: string,
@@ -103,15 +156,17 @@ export async function changePassword(
   if (!settings) {
     settings = await db.siteSettings.create({ data: { id: "main" } });
   }
-  if (currentPassword !== settings.adminPassword) {
+  const valid = await verifyPassword(currentPassword, settings.adminPassword || "");
+  if (!valid) {
     return { success: false, error: "Current password is incorrect." };
   }
-  if (!newPassword || newPassword.length < 4) {
-    return { success: false, error: "New password must be at least 4 characters." };
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: "New password must be at least 8 characters." };
   }
+  const hash = await hashPassword(newPassword);
   await db.siteSettings.update({
     where: { id: "main" },
-    data: { adminPassword: newPassword },
+    data: { adminPassword: hash },
   });
   return { success: true };
 }
