@@ -1607,8 +1607,8 @@ function ProjectFormModal({ project, onClose, onSaved, onError }: {
             <textarea className={`${adminInputCls} resize-none`} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Project description..." required />
           </AdminField>
 
-          {/* Image upload with drag & drop */}
-          <AdminField label="Project Image" hint="Drag & drop or click to upload. PNG, JPG, WEBP up to 8MB.">
+          {/* Image: upload or paste URL */}
+          <AdminField label="Project Image" hint="Upload a file or paste an image URL below.">
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
@@ -1639,6 +1639,20 @@ function ProjectFormModal({ project, onClose, onSaved, onError }: {
                 onChange={handleFileInput}
                 className="hidden"
               />
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                className={`${adminInputCls} flex-1 text-xs`}
+                placeholder="Or paste image URL here..."
+                value={image.startsWith("http") || image.startsWith("/") ? image : ""}
+                onChange={(e) => setImage(e.target.value)}
+              />\n              <button
+                type="button"
+                onClick={() => setImage("/project-1.png")}
+                className="text-[0.65rem] px-3 py-2 rounded-lg border border-[rgba(201,168,76,0.2)] text-[#8A8478] hover:text-[#C9A84C] hover:border-[rgba(201,168,76,0.4)] transition-all whitespace-nowrap"
+              >
+                Reset
+              </button>
             </div>
           </AdminField>
 
