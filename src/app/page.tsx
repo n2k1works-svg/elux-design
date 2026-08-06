@@ -1070,7 +1070,7 @@ function Footer() {
           </div>
         </div>
         <div className="section-divider mt-8 mb-6" />
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col items-center gap-4">
           <p className="text-center text-xs text-[#8A8478]/60 font-light">Building Design &middot; 3D Visualization &middot; Project Oversight &middot; Nadi, Fiji</p>
           <p className="text-center text-xs text-[#C9A84C]/70 font-light hover:text-[#C9A84C] transition-colors duration-300">Developed by <span className="font-semibold tracking-wide">N2K Labs</span></p>
         </div>
