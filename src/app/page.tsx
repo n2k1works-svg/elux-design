@@ -749,7 +749,11 @@ function ProjectsSection() {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
           <div className="lightbox-content max-w-5xl w-full max-h-[85vh] rounded-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <Image src={lightboxImage} alt="Project full view" width={1200} height={800} className="w-full h-auto object-contain" />
+            {lightboxImage.startsWith('data:') ? (
+              <img src={lightboxImage} alt="Project full view" className="w-full h-auto object-contain" />
+            ) : (
+              <Image src={lightboxImage} alt="Project full view" width={1200} height={800} className="w-full h-auto object-contain" />
+            )}
           </div>
         </div>
       )}
@@ -770,7 +774,11 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
         className="relative h-56 overflow-hidden cursor-zoom-in"
         onClick={(e) => { e.stopPropagation(); onImageClick(project.image); }}
       >
-        <Image src={project.image} alt={project.title} fill className="card-image object-cover" sizes="(max-width: 768px) 80vw, 33vw" />
+        {project.image.startsWith('data:') ? (
+          <img src={project.image} alt={project.title} className="card-image object-cover absolute inset-0 w-full h-full" />
+        ) : (
+          <Image src={project.image} alt={project.title} fill className="card-image object-cover" sizes="(max-width: 768px) 80vw, 33vw" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
         <div className="absolute top-4 left-4">
           <span className="text-[0.65rem] tracking-[0.15em] uppercase px-3 py-1 rounded-full border border-[rgba(201,168,76,0.3)] text-[#C9A84C] bg-[rgba(10,10,10,0.6)] backdrop-blur-sm">
