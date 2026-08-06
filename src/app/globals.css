@@ -354,6 +354,17 @@
   color: rgba(245, 240, 232, 0.3);
 }
 
+select.form-input-glass {
+  background: #0A0A0A;
+  color: #FFFFFF;
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+select.form-input-glass option {
+  background: #0A0A0A;
+  color: #FFFFFF;
+}
+
 /* === GOLD BUTTON === */
 .btn-gold {
   background: linear-gradient(135deg, #C9A84C 0%, #D4AF37 50%, #A07C1C 100%);
