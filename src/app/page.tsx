@@ -846,9 +846,9 @@ function TestimonialsSection() {
       .then((r) => r.json())
       .then((data: TestimonialT[]) => {
         if (cancelled) return;
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setTestimonials(data);
-          setActive(0);
+          if (data.length > 0) setActive(0);
         }
       })
       .catch(() => { /* keep fallback */ });
