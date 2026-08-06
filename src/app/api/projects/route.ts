@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     const category = String(formData.get("category") || "");
     const description = String(formData.get("description") || "");
     const image = String(formData.get("image") || "/project-1.png");
+    const imagesRaw = formData.get("images");
+    const images = imagesRaw ? JSON.parse(String(imagesRaw)) : [];
     const orderRaw = formData.get("order");
     const order = orderRaw ? parseInt(String(orderRaw), 10) || 0 : 0;
     const activeRaw = formData.get("active");
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const project = await db.project.create({
-      data: { title, location, category, description, image, order, active },
+      data: { title, location, category, description, image, images, order, active },
     });
     return NextResponse.json(project, { status: 201 });
   } catch (err) {

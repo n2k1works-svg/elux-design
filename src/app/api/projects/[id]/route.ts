@@ -38,6 +38,10 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
         const v = formData.get(key);
         if (v != null) data[key] = String(v);
       }
+      const imagesRaw = formData.get("images");
+      if (imagesRaw != null) {
+        try { data.images = JSON.parse(String(imagesRaw)); } catch { /* ignore */ }
+      }
       const orderRaw = formData.get("order");
       if (orderRaw != null) data.order = parseInt(String(orderRaw), 10) || 0;
       const activeRaw = formData.get("active");
@@ -47,6 +51,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
       for (const key of ["title", "location", "category", "description", "image"]) {
         if (typeof body[key] === "string") data[key] = body[key];
       }
+      if (Array.isArray(body.images)) data.images = body.images;
       if (typeof body.order === "number") data.order = body.order;
       if (typeof body.active === "boolean") data.active = body.active;
     }

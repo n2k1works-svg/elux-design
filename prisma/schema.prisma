@@ -14,7 +14,8 @@ model Project {
   location    String
   category    String
   description String
-  image       String @default("/project-1.png")
+  image       String   @default("/project-1.png")
+  images      String[] @default([])
   order       Int      @default(0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
