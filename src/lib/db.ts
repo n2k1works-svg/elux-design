@@ -27,3 +27,22 @@ export const db =
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+
+/** Auto-migrate: add `images` column if missing (runs once) */
+let _migrated = false;
+export async function ensureMigrated() {
+  if (_migrated) return;
+  _migrated = true;
+  try {
+    await db.$executeRawUnsafe(
+      `DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'images') THEN
+          ALTER TABLE "Project" ADD COLUMN "images" TEXT[] DEFAULT '{}';
+        END IF;
+      END $$;`
+    );
+  } catch (e) {
+    _migrated = false; // allow retry
+    console.error('Auto-migration check failed:', e);
+  }
+}
