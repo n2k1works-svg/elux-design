@@ -3,7 +3,7 @@ import { isAuthenticated } from "@/lib/auth";
 import sharp from "sharp";
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml"];
-const MAX_INPUT_SIZE = 4 * 1024 * 1024; // 4MB — Vercel hobby body limit
+const MAX_INPUT_SIZE = 15 * 1024 * 1024; // 15MB per image
 const MAX_OUTPUT_PIXELS = 1600; // Max width/height — keeps data URL reasonable
 
 export async function POST(req: Request) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     if (file.size > MAX_INPUT_SIZE) {
-      return NextResponse.json({ error: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 4MB. Compress your image first or use a smaller file.` }, { status: 400 });
+      return NextResponse.json({ error: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 15MB per image.` }, { status: 400 });
     }
 
     const bytes = Buffer.from(await file.arrayBuffer());
