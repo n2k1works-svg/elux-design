@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { login } from "@/lib/auth";
+import { login, isAuthenticated } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Lock out after 5 failed attempts per IP in 15 minutes
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+export async function GET() {
+  try {
+    const authed = await isAuthenticated();
+    return NextResponse.json({ authenticated: authed });
+  } catch {
+    return NextResponse.json({ authenticated: false });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {

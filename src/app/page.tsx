@@ -1431,14 +1431,19 @@ function AdminProjectsTab() {
     setLoading(true);
     try {
       const r = await fetch("/api/projects?all=1");
+      if (!r.ok) {
+        console.error("Projects fetch failed:", r.status);
+        showToast("Failed to load projects.", "error");
+        return;
+      }
       const data = await r.json();
       if (Array.isArray(data)) setProjects(data);
     } catch {
-      /* ignore */
+      showToast("Network error loading projects.", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => { load(); }, [load]);
 

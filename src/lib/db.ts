@@ -28,7 +28,7 @@ export const db =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
-/** Auto-migrate: add `images` column if missing (runs once) */
+/** Auto-migrate: add missing columns if needed (runs once per cold start) */
 let _migrated = false;
 export async function ensureMigrated() {
   if (_migrated) return;
@@ -38,6 +38,12 @@ export async function ensureMigrated() {
       `DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'images') THEN
           ALTER TABLE "Project" ADD COLUMN "images" TEXT[] DEFAULT '{}';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'location') THEN
+          ALTER TABLE "Project" ADD COLUMN "location" TEXT NOT NULL DEFAULT '';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'active') THEN
+          ALTER TABLE "Project" ADD COLUMN "active" BOOLEAN NOT NULL DEFAULT true;
         END IF;
       END $$;`
     );
