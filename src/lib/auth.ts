@@ -101,6 +101,19 @@ export async function isAuthenticated(): Promise<boolean> {
   }
 }
 
+async function getSettingsWithRetry() {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const s = await db.siteSettings.findUnique({ where: { id: "main" } });
+      if (s) return s;
+      return await db.siteSettings.create({ data: { id: "main" } });
+    } catch (e) {
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      else throw e;
+    }
+  }
+}
+
 /**
  * Attempt to log in. Returns true if password matches.
  * On success, sets the auth cookie.
@@ -108,19 +121,7 @@ export async function isAuthenticated(): Promise<boolean> {
 export async function login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
     // Retry DB connection for cold-start resilience
-    let settings: Awaited<ReturnType<typeof db.siteSettings.findUnique>> | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        settings = await db.siteSettings.findUnique({ where: { id: "main" } });
-        break;
-      } catch (e) {
-        if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-        else throw e;
-      }
-    }
-    if (!settings) {
-      settings = await db.siteSettings.create({ data: { id: "main" } });
-    }
+    const settings = await getSettingsWithRetry();
     const valid = await verifyPassword(password, settings.adminPassword || "");
     if (!valid) {
       return { success: false, error: "Invalid password." };
