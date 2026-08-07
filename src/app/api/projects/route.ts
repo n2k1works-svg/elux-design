@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, ensureMigrated } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
+function parseImages(p: { images: string | null }): string[] {
+  try {
+    const parsed = p.images ? JSON.parse(p.images) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     await ensureMigrated();
@@ -13,7 +22,7 @@ export async function GET(req: NextRequest) {
       where: showAll ? undefined : { active: true },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    return NextResponse.json(projects);
+    return NextResponse.json(projects.map(p => ({ ...p, images: parseImages(p) })));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Projects GET error:", msg);
@@ -34,7 +43,7 @@ export async function POST(req: NextRequest) {
     const description = String(formData.get("description") || "");
     const image = String(formData.get("image") || "/project-1.png");
     const imagesRaw = formData.get("images");
-    const images = imagesRaw ? JSON.parse(String(imagesRaw)) : [];
+    const imagesArr = imagesRaw ? JSON.parse(String(imagesRaw)) : [];
     const orderRaw = formData.get("order");
     const order = orderRaw ? parseInt(String(orderRaw), 10) || 0 : 0;
     const activeRaw = formData.get("active");
@@ -48,9 +57,9 @@ export async function POST(req: NextRequest) {
     }
 
     const project = await db.project.create({
-      data: { title, location, category, description, image, images, order, active },
+      data: { title, location, category, description, image, images: JSON.stringify(imagesArr), order, active },
     });
-    return NextResponse.json(project, { status: 201 });
+    return NextResponse.json({ ...project, images: imagesArr }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: "Failed to create project." }, { status: 500 });
   }

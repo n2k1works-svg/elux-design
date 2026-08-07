@@ -4,6 +4,15 @@ import { isAuthenticated } from "@/lib/auth";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+function parseImages(p: { images: string | null }): string[] {
+  try {
+    const parsed = p.images ? JSON.parse(p.images) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await ctx.params;
@@ -11,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     if (!project) {
       return NextResponse.json({ error: "Not found." }, { status: 404 });
     }
-    return NextResponse.json(project);
+    return NextResponse.json({ ...project, images: parseImages(project) });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch project." }, { status: 500 });
   }
@@ -40,7 +49,10 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
       }
       const imagesRaw = formData.get("images");
       if (imagesRaw != null) {
-        try { data.images = JSON.parse(String(imagesRaw)); } catch { /* ignore */ }
+        try {
+          const arr = JSON.parse(String(imagesRaw));
+          if (Array.isArray(arr)) data.images = JSON.stringify(arr);
+        } catch { /* ignore */ }
       }
       const orderRaw = formData.get("order");
       if (orderRaw != null) data.order = parseInt(String(orderRaw), 10) || 0;
@@ -51,7 +63,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
       for (const key of ["title", "location", "category", "description", "image"]) {
         if (typeof body[key] === "string") data[key] = body[key];
       }
-      if (Array.isArray(body.images)) data.images = body.images;
+      if (Array.isArray(body.images)) data.images = JSON.stringify(body.images);
       if (typeof body.order === "number") data.order = body.order;
       if (typeof body.active === "boolean") data.active = body.active;
     }
