@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureMigrated } from "@/lib/db";
+import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureMigrated();
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
     // Showing hidden items requires authentication
@@ -15,6 +14,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(projects);
   } catch (err) {
+    console.error("Projects GET error:", err);
     return NextResponse.json([], { status: 500 });
   }
 }
