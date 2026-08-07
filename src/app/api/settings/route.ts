@@ -5,15 +5,14 @@ import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 export async function GET() {
   try {
     // Retry up to 3 times for cold-start resilience
-    let settings = null;
-    let lastErr: unknown;
+    let settings: Awaited<ReturnType<typeof db.siteSettings.findUnique>> | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         settings = await db.siteSettings.findUnique({ where: { id: "main" } });
         break;
       } catch (e) {
-        lastErr = e;
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        else throw e;
       }
     }
     if (!settings) {
