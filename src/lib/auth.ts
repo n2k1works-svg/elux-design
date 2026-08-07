@@ -108,7 +108,7 @@ export async function isAuthenticated(): Promise<boolean> {
 export async function login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
     // Retry DB connection for cold-start resilience
-    let settings = null;
+    let settings: Awaited<ReturnType<typeof db.siteSettings.findUnique>> | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         settings = await db.siteSettings.findUnique({ where: { id: "main" } });
