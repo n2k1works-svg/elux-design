@@ -2,23 +2,22 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
+async function getSettings() {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const s = await db.siteSettings.findUnique({ where: { id: "main" } });
+      if (s) return s;
+      return await db.siteSettings.create({ data: { id: "main" } });
+    } catch (e) {
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      else throw e;
+    }
+  }
+}
+
 export async function GET() {
   try {
-    // Retry up to 3 times for cold-start resilience
-    let settings: Awaited<ReturnType<typeof db.siteSettings.findUnique>> | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        settings = await db.siteSettings.findUnique({ where: { id: "main" } });
-        break;
-      } catch (e) {
-        if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-        else throw e;
-      }
-    }
-    if (!settings) {
-      settings = await db.siteSettings.create({ data: { id: "main" } });
-    }
-    // Strip adminPassword before returning to the public
+    const settings = await getSettings();
     const { adminPassword: _ap, ...safe } = settings;
     return NextResponse.json(safe);
   } catch (err) {
