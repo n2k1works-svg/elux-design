@@ -18,6 +18,7 @@ async function getSettings() {
 export async function GET() {
   try {
     const settings = await getSettings();
+    if (!settings) throw new Error('Settings not found');
     const { adminPassword: _ap, ...safe } = settings;
     return NextResponse.json(safe);
   } catch (err) {
