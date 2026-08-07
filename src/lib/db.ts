@@ -28,7 +28,7 @@ export const db =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
-/** Auto-migrate: add missing columns if needed (runs once per cold start) */
+/** Auto-migrate: add missing columns & fix types if needed (runs once per cold start) */
 let _migrated = false;
 export async function ensureMigrated() {
   if (_migrated) return;
@@ -36,12 +36,28 @@ export async function ensureMigrated() {
   try {
     await db.$executeRawUnsafe(
       `DO $$ BEGIN
+        -- Add images column if missing
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'images') THEN
           ALTER TABLE "Project" ADD COLUMN "images" TEXT[] DEFAULT '{}';
         END IF;
+        -- Convert images from TEXT to TEXT[] if it's the wrong type
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'Project' AND column_name = 'images' AND data_type = 'text'
+        ) THEN
+          ALTER TABLE "Project" ALTER COLUMN "images" TYPE TEXT[] USING
+            CASE
+              WHEN "images" IS NULL THEN '{}'
+              WHEN "images"::text = '' THEN '{}'
+              ELSE ARRAY["images"::text]
+            END;
+          ALTER TABLE "Project" ALTER COLUMN "images" SET DEFAULT '{}';
+        END IF;
+        -- Add location column if missing
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'location') THEN
           ALTER TABLE "Project" ADD COLUMN "location" TEXT NOT NULL DEFAULT '';
         END IF;
+        -- Add active column if missing
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'active') THEN
           ALTER TABLE "Project" ADD COLUMN "active" BOOLEAN NOT NULL DEFAULT true;
         END IF;
