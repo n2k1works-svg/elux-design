@@ -956,7 +956,7 @@ function ContactSection() {
       })
       .then((data: Partial<SettingsT>) => {
         if (cancelled) return;
-        if (data && typeof data === "object" && !data.error) {
+        if (data && typeof data === "object" && !('error' in data)) {
           setSettings((prev) => ({
             phone: data.phone ?? prev.phone,
             email: data.email ?? prev.email,
