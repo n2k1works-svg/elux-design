@@ -1503,8 +1503,10 @@ function AdminProjectsTab() {
             <div key={p.id} className="liquid-glass rounded-xl p-4 flex gap-4">
               <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-[rgba(201,168,76,0.05)]">
                 {p.image ? (
-                  <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
-                ) : null}
+                  <img src={p.image} alt={p.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/project-1.png'; }} />
+                ) : (
+                  <img src="/project-1.png" alt={p.title} className="w-full h-full object-cover opacity-30" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">

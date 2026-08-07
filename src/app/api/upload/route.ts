@@ -1,12 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import sharp from "sharp";
 
-const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml"];
-const MAX_INPUT_SIZE = 15 * 1024 * 1024; // 15MB per image
-const MAX_OUTPUT_PIXELS = 1600; // Max width/height — keeps data URL reasonable
+const MAX_SIZE = 15 * 1024 * 1024; // 15MB
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const authed = await isAuthenticated();
     if (!authed) {
@@ -14,43 +11,29 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
+    const file = formData.get("file");
+    if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "No file provided." }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Use PNG, JPG, WEBP, GIF, or SVG." }, { status: 400 });
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "Only image files are allowed." }, { status: 400 });
     }
 
-    if (file.size > MAX_INPUT_SIZE) {
-      return NextResponse.json({ error: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 15MB per image.` }, { status: 400 });
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 15MB.` },
+        { status: 400 },
+      );
     }
 
-    const bytes = Buffer.from(await file.arrayBuffer());
-
-    // Compress and resize with sharp
-    const pipeline = sharp(bytes);
-    const metadata = await pipeline.metadata();
-
-    let processed: Buffer;
-    if (metadata.width && metadata.width > MAX_OUTPUT_PIXELS) {
-      processed = await pipeline
-        .resize(MAX_OUTPUT_PIXELS, null, { withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toBuffer();
-    } else {
-      processed = await pipeline
-        .jpeg({ quality: 80 })
-        .toBuffer();
-    }
-
-    const dataUrl = `data:image/jpeg;base64,${processed.toString("base64")}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const base64 = buffer.toString("base64");
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
     return NextResponse.json({ url: dataUrl });
   } catch (err) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: "Upload failed: " + (err instanceof Error ? err.message : "Unknown error") }, { status: 500 });
+    return NextResponse.json({ error: "Upload failed." }, { status: 500 });
   }
 }
