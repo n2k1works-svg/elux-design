@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
 // Only these fields are updatable
@@ -21,9 +22,9 @@ function sanitizeBody(body: Record<string, unknown>) {
 
 export async function GET() {
   try {
-    let about = await db.aboutContent.findUnique({ where: { id: "main" } });
+    let about = await db.aboutContent.findUnique({ where: { id: SITE_ID } });
     if (!about) {
-      about = await db.aboutContent.create({ data: { id: "main" } });
+      about = await db.aboutContent.create({ data: { id: SITE_ID } });
     }
     return NextResponse.json(about);
   } catch (err) {
@@ -39,9 +40,9 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const data = sanitizeBody(body);
     const about = await db.aboutContent.upsert({
-      where: { id: "main" },
+      where: { id: SITE_ID },
       update: data,
-      create: { id: "main", ...data },
+      create: { id: SITE_ID, ...data },
     });
     return NextResponse.json(about);
   } catch (err) {

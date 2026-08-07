@@ -42,6 +42,19 @@ export async function ensureMigrated() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'active') THEN
           ALTER TABLE "Project" ADD COLUMN "active" BOOLEAN NOT NULL DEFAULT true;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Project' AND column_name = 'site') THEN
+          ALTER TABLE "Project" ADD COLUMN "site" TEXT NOT NULL DEFAULT 'elux-design';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Testimonial' AND column_name = 'site') THEN
+          ALTER TABLE "Testimonial" ADD COLUMN "site" TEXT NOT NULL DEFAULT 'elux-design';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Service' AND column_name = 'site') THEN
+          ALTER TABLE "Service" ADD COLUMN "site" TEXT NOT NULL DEFAULT 'elux-design';
+        END IF;
+        -- Backfill existing rows that have no site value
+        UPDATE "Project" SET "site" = 'elux-design' WHERE "site" IS NULL OR "site" = '';
+        UPDATE "Testimonial" SET "site" = 'elux-design' WHERE "site" IS NULL OR "site" = '';
+        UPDATE "Service" SET "site" = 'elux-design' WHERE "site" IS NULL OR "site" = '';
       END $$;`
     );
   } catch (e) {

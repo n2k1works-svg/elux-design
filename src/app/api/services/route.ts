@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
     const all = url.searchParams.get("all") === "1";
     const showAll = all && (await isAuthenticated());
     const services = await db.service.findMany({
-      where: showAll ? undefined : { active: true },
+      where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json(services);
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Title and description are required." }, { status: 400 });
     }
     const service = await db.service.create({
-      data: { title, description, iconKey: iconKey || "building", order: order ?? 0, active: active ?? true },
+      data: { site: SITE_ID, title, description, iconKey: iconKey || "building", order: order ?? 0, active: active ?? true },
     });
     return NextResponse.json(service, { status: 201 });
   } catch {

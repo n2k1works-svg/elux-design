@@ -10,6 +10,7 @@ datasource db {
 
 model Project {
   id          String   @id @default(cuid())
+  site        String   @default("elux-design")
   title       String
   location    String
   category    String
@@ -24,6 +25,7 @@ model Project {
 
 model Testimonial {
   id        String   @id @default(cuid())
+  site      String   @default("elux-design")
   quote     String
   name      String
   role      String
@@ -35,6 +37,7 @@ model Testimonial {
 
 model Service {
   id          String   @id @default(cuid())
+  site        String   @default("elux-design")
   title       String
   description String
   iconKey     String   @default("building")
@@ -45,7 +48,7 @@ model Service {
 }
 
 model AboutContent {
-  id                String @id @default("main")
+  id                String @id @default("elux-design")
   paragraph1        String @default("Elux Design is a premier building design and 3D visualization firm based in Nadi, Fiji. For over 15 years, we have been at the forefront of architectural innovation in the South Pacific, delivering projects that range from luxury waterfront residences to large-scale commercial developments across the region.")
   paragraph2        String @default("Our philosophy is rooted in the belief that great architecture should work in harmony with its environment. Fiji's tropical climate, stunning landscapes, and rich cultural heritage serve as both our inspiration and our guide. Every project we undertake is a unique response to its site, its climate, and the vision of its owner.")
   paragraph3        String @default("From the concept sketches to the final walkthrough, our integrated approach ensures that design intent is preserved at every stage, resulting in spaces that are not only beautiful but enduringly functional and deeply connected to its Pacific island context.")
@@ -61,7 +64,7 @@ model AboutContent {
 }
 
 model SiteSettings {
-  id            String   @id @default("main")
+  id            String   @id @default("elux-design")
   phone         String @default("+679 000 0000")
   email         String @default("hello@eluxdesign.com")
   location      String @default("Nadi, Fiji")

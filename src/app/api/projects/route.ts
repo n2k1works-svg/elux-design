@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, ensureMigrated } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
 function parseImages(p: { images: string | null }): string[] {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     // Showing hidden items requires authentication
     const showAll = all && (await isAuthenticated());
     const projects = await db.project.findMany({
-      where: showAll ? undefined : { active: true },
+      where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json(projects.map(p => ({ ...p, images: parseImages(p) })));
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const project = await db.project.create({
-      data: { title, location, category, description, image, images: JSON.stringify(imagesArr), order, active },
+      data: { site: SITE_ID, title, location, category, description, image, images: JSON.stringify(imagesArr), order, active },
     });
     return NextResponse.json({ ...project, images: imagesArr }, { status: 201 });
   } catch (err) {

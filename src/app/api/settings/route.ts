@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
 export async function GET() {
   try {
-    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
     if (!settings) {
-      settings = await db.siteSettings.create({ data: { id: "main" } });
+      settings = await db.siteSettings.create({ data: { id: SITE_ID } });
     }
     const { adminPassword: _ap, ...safe } = settings;
     return NextResponse.json(safe);
@@ -33,9 +34,9 @@ export async function PUT(req: Request) {
     };
 
     const updated = await db.siteSettings.upsert({
-      where: { id: "main" },
+      where: { id: SITE_ID },
       update: data,
-      create: { id: "main", ...data },
+      create: { id: SITE_ID, ...data },
     });
 
     const { adminPassword: _ap, ...safe } = updated;
@@ -62,9 +63,9 @@ export async function PATCH(req: Request) {
         { status: 400 },
       );
     }
-    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
     if (!settings) {
-      settings = await db.siteSettings.create({ data: { id: "main" } });
+      settings = await db.siteSettings.create({ data: { id: SITE_ID } });
     }
     const valid = await verifyPassword(currentPassword, settings.adminPassword || "");
     if (!valid) {
@@ -78,7 +79,7 @@ export async function PATCH(req: Request) {
     }
     const hash = await hashPassword(newPassword);
     await db.siteSettings.update({
-      where: { id: "main" },
+      where: { id: SITE_ID },
       data: { adminPassword: hash },
     });
     return NextResponse.json({ success: true });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
     // Showing hidden items requires authentication
     const showAll = all && (await isAuthenticated());
     const testimonials = await db.testimonial.findMany({
-      where: showAll ? undefined : { active: true },
+      where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json(testimonials);
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const testimonial = await db.testimonial.create({
-      data: { quote, name, role, order, active },
+      data: { site: SITE_ID, quote, name, role, order, active },
     });
     return NextResponse.json(testimonial, { status: 201 });
   } catch (err) {

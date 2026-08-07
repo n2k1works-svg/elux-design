@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -75,7 +76,7 @@ export async function verifyPassword(plain: string, stored: string): Promise<boo
     try {
       const hash = await hashPassword(plain);
       await db.siteSettings.update({
-        where: { id: "main" },
+        where: { id: SITE_ID },
         data: { adminPassword: hash },
       });
     } catch (e) {
@@ -107,9 +108,9 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
-    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
     if (!settings) {
-      settings = await db.siteSettings.create({ data: { id: "main" } });
+      settings = await db.siteSettings.create({ data: { id: SITE_ID } });
     }
     const valid = await verifyPassword(password, settings.adminPassword || "");
     if (!valid) {
@@ -152,9 +153,9 @@ export async function changePassword(
   currentPassword: string,
   newPassword: string,
 ): Promise<{ success: boolean; error?: string }> {
-  let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+  let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
   if (!settings) {
-    settings = await db.siteSettings.create({ data: { id: "main" } });
+    settings = await db.siteSettings.create({ data: { id: SITE_ID } });
   }
   const valid = await verifyPassword(currentPassword, settings.adminPassword || "");
   if (!valid) {
@@ -165,7 +166,7 @@ export async function changePassword(
   }
   const hash = await hashPassword(newPassword);
   await db.siteSettings.update({
-    where: { id: "main" },
+    where: { id: SITE_ID },
     data: { adminPassword: hash },
   });
   return { success: true };

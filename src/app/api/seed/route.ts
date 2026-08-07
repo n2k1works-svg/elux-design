@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
 const SEED_PROJECTS = [
@@ -84,14 +85,14 @@ async function seed() {
   const result: Record<string, boolean> = {};
 
   try {
-    await db.siteSettings.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
+    await db.siteSettings.upsert({ where: { id: SITE_ID }, update: {}, create: { id: SITE_ID } });
     result.settings = true;
   } catch (e) { console.error("Seed settings error:", e); }
 
   try {
     const count = await db.project.count();
     if (count === 0) {
-      for (const p of SEED_PROJECTS) await db.project.create({ data: p });
+      for (const p of SEED_PROJECTS) await db.project.create({ data: { ...p, site: SITE_ID } });
     }
     result.projects = true;
   } catch (e) { console.error("Seed projects error:", e); }
@@ -99,7 +100,7 @@ async function seed() {
   try {
     const count = await db.testimonial.count();
     if (count === 0) {
-      for (const t of SEED_TESTIMONIALS) await db.testimonial.create({ data: t });
+      for (const t of SEED_TESTIMONIALS) await db.testimonial.create({ data: { ...t, site: SITE_ID } });
     }
     result.testimonials = true;
   } catch (e) { console.error("Seed testimonials error:", e); }
@@ -107,13 +108,13 @@ async function seed() {
   try {
     const count = await db.service.count();
     if (count === 0) {
-      for (const s of SEED_SERVICES) await db.service.create({ data: s });
+      for (const s of SEED_SERVICES) await db.service.create({ data: { ...s, site: SITE_ID } });
     }
     result.services = true;
   } catch (e) { console.error("Seed services error:", e); }
 
   try {
-    await db.aboutContent.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } });
+    await db.aboutContent.upsert({ where: { id: SITE_ID }, update: {}, create: { id: SITE_ID } });
     result.about = true;
   } catch (e) { console.error("Seed about error:", e); }
 
