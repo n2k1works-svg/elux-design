@@ -2,27 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
-async function getSettings() {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const s = await db.siteSettings.findUnique({ where: { id: "main" } });
-      if (s) return s;
-      return await db.siteSettings.create({ data: { id: "main" } });
-    } catch (e) {
-      if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-      else throw e;
-    }
-  }
-}
-
 export async function GET() {
   try {
-    const settings = await getSettings();
-    if (!settings) throw new Error('Settings not found');
+    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    if (!settings) {
+      settings = await db.siteSettings.create({ data: { id: "main" } });
+    }
     const { adminPassword: _ap, ...safe } = settings;
     return NextResponse.json(safe);
   } catch (err) {
-    console.error("Settings GET failed after retries:", err);
     return NextResponse.json({ error: "Failed to load settings." }, { status: 500 });
   }
 }
@@ -58,7 +46,6 @@ export async function PUT(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  // Patch used for password change
   try {
     const authed = await isAuthenticated();
     if (!authed) {
