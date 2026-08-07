@@ -1432,8 +1432,10 @@ function AdminProjectsTab() {
     try {
       const r = await fetch("/api/projects?all=1");
       if (!r.ok) {
-        console.error("Projects fetch failed:", r.status);
-        showToast("Failed to load projects.", "error");
+        const errData = await r.json().catch(() => null);
+        const errMsg = errData?.error || `HTTP ${r.status}`;
+        console.error("Projects fetch failed:", errMsg);
+        showToast(`Failed to load projects: ${errMsg}`, "error");
         return;
       }
       const data = await r.json();

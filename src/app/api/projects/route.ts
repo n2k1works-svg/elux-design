@@ -15,8 +15,9 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(projects);
   } catch (err) {
-    console.error("Projects GET error:", err);
-    return NextResponse.json([], { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Projects GET error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
