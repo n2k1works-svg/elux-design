@@ -950,10 +950,13 @@ function ContactSection() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/settings")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Settings fetch failed");
+        return r.json();
+      })
       .then((data: Partial<SettingsT>) => {
         if (cancelled) return;
-        if (data && typeof data === "object") {
+        if (data && typeof data === "object" && !data.error) {
           setSettings((prev) => ({
             phone: data.phone ?? prev.phone,
             email: data.email ?? prev.email,
@@ -964,7 +967,7 @@ function ContactSection() {
           }));
         }
       })
-      .catch(() => { /* keep fallback */ });
+      .catch((err) => { console.error("Settings fetch error:", err); });
     return () => { cancelled = true; };
   }, []);
 
