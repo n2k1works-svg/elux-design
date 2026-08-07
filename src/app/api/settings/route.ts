@@ -4,7 +4,18 @@ import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
 export async function GET() {
   try {
-    let settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+    // Retry up to 3 times for cold-start resilience
+    let settings = null;
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        settings = await db.siteSettings.findUnique({ where: { id: "main" } });
+        break;
+      } catch (e) {
+        lastErr = e;
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      }
+    }
     if (!settings) {
       settings = await db.siteSettings.create({ data: { id: "main" } });
     }
@@ -12,19 +23,8 @@ export async function GET() {
     const { adminPassword: _ap, ...safe } = settings;
     return NextResponse.json(safe);
   } catch (err) {
-    return NextResponse.json(
-      {
-        id: "main",
-        phone: "+679 000 0000",
-        email: "hello@eluxdesign.com",
-        location: "Nadi, Fiji",
-        facebook: "https://facebook.com/EluxDesign",
-        instagram: "https://instagram.com/EluxDesign",
-        linkedin: "",
-        updatedAt: new Date().toISOString(),
-      },
-      { status: 500 },
-    );
+    console.error("Settings GET failed after retries:", err);
+    return NextResponse.json({ error: "Failed to load settings." }, { status: 500 });
   }
 }
 
