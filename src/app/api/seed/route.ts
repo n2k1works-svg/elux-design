@@ -97,52 +97,63 @@ const SEED_ABOUT = {
 
 // Exported so GET endpoints can call it for auto-seeding
 export async function seedIfEmpty() {
-  const result: Record<string, boolean> = {};
+  const result: Record<string, string> = {};
 
+  // Settings
   try {
     await db.siteSettings.upsert({
       where: { id: SITE_ID },
       update: {},
       create: { id: SITE_ID },
     });
-    result.settings = true;
+    result.settings = "ok";
   } catch (e) {
-    console.error("Seed settings error:", e);
+    result.settings = String(e);
   }
 
+  // Projects
   try {
     const count = await db.project.count({ where: { site: SITE_ID } });
     if (count === 0) {
       for (const p of SEED_PROJECTS)
         await db.project.create({ data: { ...p, site: SITE_ID } });
+      result.projects = "seeded 3";
+    } else {
+      result.projects = `already has ${count}`;
     }
-    result.projects = true;
   } catch (e) {
-    console.error("Seed projects error:", e);
+    result.projects = "error: " + String(e);
   }
 
+  // Testimonials
   try {
     const count = await db.testimonial.count({ where: { site: SITE_ID } });
     if (count === 0) {
       for (const t of SEED_TESTIMONIALS)
         await db.testimonial.create({ data: { ...t, site: SITE_ID } });
+      result.testimonials = "seeded 3";
+    } else {
+      result.testimonials = `already has ${count}`;
     }
-    result.testimonials = true;
   } catch (e) {
-    console.error("Seed testimonials error:", e);
+    result.testimonials = "error: " + String(e);
   }
 
+  // Services
   try {
     const count = await db.service.count({ where: { site: SITE_ID } });
     if (count === 0) {
       for (const s of SEED_SERVICES)
         await db.service.create({ data: { ...s, site: SITE_ID } });
+      result.services = "seeded 3";
+    } else {
+      result.services = `already has ${count}`;
     }
-    result.services = true;
   } catch (e) {
-    console.error("Seed services error:", e);
+    result.services = "error: " + String(e);
   }
 
+  // About
   try {
     const existing = await db.aboutContent.findUnique({ where: { id: SITE_ID } });
     if (!existing || !existing.paragraph1) {
@@ -151,15 +162,28 @@ export async function seedIfEmpty() {
         update: SEED_ABOUT,
         create: { id: SITE_ID, ...SEED_ABOUT },
       });
+      result.about = "seeded";
+    } else {
+      result.about = "already exists";
     }
-    result.about = true;
   } catch (e) {
-    console.error("Seed about error:", e);
+    result.about = "error: " + String(e);
   }
 
   return result;
 }
 
+// GET /api/seed — returns DB status + triggers seed if empty (no auth needed)
+export async function GET() {
+  try {
+    const result = await seedIfEmpty();
+    return NextResponse.json({ site: SITE_ID, result });
+  } catch (err) {
+    return NextResponse.json({ site: SITE_ID, error: String(err) }, { status: 500 });
+  }
+}
+
+// POST /api/seed — same but requires admin auth
 export async function POST() {
   try {
     const authed = await isAuthenticated();
@@ -171,8 +195,4 @@ export async function POST() {
   } catch (err) {
     return NextResponse.json({ error: "Seeding failed." }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ error: "Not found." }, { status: 404 });
 }
