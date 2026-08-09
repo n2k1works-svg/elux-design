@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 
-// GET /api/debug — shows DB state without requiring auth
-// This helps diagnose why admin shows 0 projects
+// GET /api/debug — shows DB state, runs ensureMigrated first
 export async function GET() {
   try {
+    await ensureMigrated();
+
     const [projectCount, allProjects, testimonialCount, serviceCount, settings, about] =
       await Promise.all([
         db.project.count({ where: { site: SITE_ID } }),
@@ -16,7 +17,6 @@ export async function GET() {
         db.aboutContent.findUnique({ where: { id: SITE_ID } }),
       ]);
 
-    // Also count ALL records (no site filter) to see if there's data from other sites
     const [allProjectCount, allServiceCount, allTestimonialCount] =
       await Promise.all([
         db.project.count(),

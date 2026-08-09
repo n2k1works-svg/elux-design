@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -97,6 +97,7 @@ const SEED_ABOUT = {
 
 // Exported so GET endpoints can call it for auto-seeding
 export async function seedIfEmpty() {
+  await ensureMigrated();
   const result: Record<string, string> = {};
 
   // Settings
