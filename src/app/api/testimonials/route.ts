@@ -16,15 +16,18 @@ export async function GET(req: NextRequest) {
     });
     // Auto-seed if this site has no testimonials at all
     if (testimonials.length === 0) {
+      console.log('[/api/testimonials] No testimonials found, triggering seed...');
       await seedIfEmpty();
       testimonials = await db.testimonial.findMany({
         where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       });
     }
+    console.log(`[/api/testimonials] Returning ${testimonials.length} testimonial(s)`);
     return NextResponse.json(testimonials);
   } catch (err) {
-    return NextResponse.json([], { status: 500 });
+    console.error('[/api/testimonials] GET failed:', err);
+    return NextResponse.json({ error: 'Failed to load testimonials' }, { status: 500 });
   }
 }
 
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(testimonial, { status: 201 });
   } catch (err) {
+    console.error('[/api/testimonials] POST failed:', err);
     return NextResponse.json({ error: "Failed to create testimonial." }, { status: 500 });
   }
 }

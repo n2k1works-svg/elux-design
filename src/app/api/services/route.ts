@@ -16,15 +16,18 @@ export async function GET(req: NextRequest) {
     });
     // Auto-seed if this site has no services at all
     if (services.length === 0) {
+      console.log('[/api/services] No services found, triggering seed...');
       await seedIfEmpty();
       services = await db.service.findMany({
         where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       });
     }
+    console.log(`[/api/services] Returning ${services.length} service(s)`);
     return NextResponse.json(services);
-  } catch {
-    return NextResponse.json([], { status: 500 });
+  } catch (err) {
+    console.error('[/api/services] GET failed:', err);
+    return NextResponse.json({ error: 'Failed to load services' }, { status: 500 });
   }
 }
 
@@ -41,7 +44,8 @@ export async function POST(req: NextRequest) {
       data: { site: SITE_ID, title, description, iconKey: iconKey || "building", order: order ?? 0, active: active ?? true },
     });
     return NextResponse.json(service, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[/api/services] POST failed:', err);
     return NextResponse.json({ error: "Failed to create service." }, { status: 500 });
   }
 }

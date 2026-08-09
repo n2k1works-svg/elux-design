@@ -26,17 +26,18 @@ export async function GET(req: NextRequest) {
     });
     // Auto-seed if this site has no projects at all
     if (projects.length === 0) {
+      console.log('[/api/projects] No projects found, triggering seed...');
       await seedIfEmpty();
       projects = await db.project.findMany({
         where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       });
     }
+    console.log(`[/api/projects] Returning ${projects.length} project(s)`);
     return NextResponse.json(projects.map(p => ({ ...p, images: parseImages(p) })));
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("Projects GET error:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[/api/projects] GET failed:', err);
+    return NextResponse.json({ error: 'Failed to load projects' }, { status: 500 });
   }
 }
 
