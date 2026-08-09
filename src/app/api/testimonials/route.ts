@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { SITE_ID } from "@/lib/site";
+import { isAuthenticated } from "@/lib/auth";
+import { seedIfEmpty } from "@/app/api/seed/route";
+
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const all = url.searchParams.get("all") === "1";
+    // Showing hidden items requires authentication
+    const showAll = all && (await isAuthenticated());
+    let testimonials = await db.testimonial.findMany({
+      where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    });
+    // Auto-seed if this site has no testimonials at all
+    if (testimonials.length === 0 && !showAll) {
+      await seedIfEmpty();
+      testimonials = await db.testimonial.findMany({
+        where: { site: SITE_ID, active: true },
+        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      });
+    }
+    return NextResponse.json(testimonials);
+  } catch (err) {
+    return NextResponse.json([], { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const authed = await isAuthenticated();
+    if (!authed) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    const body = await req.json().catch(() => ({}));
+    const quote = String(body.quote || "");
+    const name = String(body.name || "");
+    const role = String(body.role || "");
+    const order = typeof body.order === "number" ? body.order : 0;
+    const active = typeof body.active === "boolean" ? body.active : true;
+
+    if (!quote || !name || !role) {
+      return NextResponse.json(
+        { error: "Quote, name and role are required." },
+        { status: 400 },
+      );
+    }
+
+    const testimonial = await db.testimonial.create({
+      data: { site: SITE_ID, quote, name, role, order, active },
+    });
+    return NextResponse.json(testimonial, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to create testimonial." }, { status: 500 });
+  }
+}

@@ -1,2 +1,69 @@
-skills/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+.claude
+.z-ai-config
+*.log
+dev.log
+dev.out.log
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+/upload/
+/tmp/
+db/*.db
+/db/
+/public/uploads//tool-results/
 node_modules/
+.env
+tool-results/
+tsconfig.json.tmp
+scripts/push-specific.py
+scripts/push-all-files.py
+scripts/push-github.py
+scripts/push-to-github.py
+scripts/push-footer-update.py
