@@ -38,14 +38,13 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
  * - Existing data is never destroyed
  * - The function is fully idempotent — safe to call on EVERY request
  *
- * No caching flag: the SQL uses IF NOT EXISTS everywhere so it's a
- * fast no-op when the schema is already correct. This guarantees the
- * schema is always right even after external database changes or warm
- * serverless instances that skipped a previous migration.
+ * Each statement is executed individually because Prisma's
+ * $executeRawUnsafe uses PostgreSQL prepared statements which
+ * do NOT support multiple commands in a single call.
  */
-const MIGRATION_SQL = `
-  -- ===== Project =====
-  CREATE TABLE IF NOT EXISTS "Project" (
+const MIGRATION_STATEMENTS = [
+  // ===== Project =====
+  `CREATE TABLE IF NOT EXISTS "Project" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "site" TEXT NOT NULL DEFAULT 'elux-design',
     "title" TEXT NOT NULL DEFAULT '',
@@ -59,15 +58,15 @@ const MIGRATION_SQL = `
     "active" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
-  ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "images" TEXT NOT NULL DEFAULT '[]';
-  ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "client" TEXT NOT NULL DEFAULT '';
-  ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
-  ALTER TABLE "Project" ALTER COLUMN "client" SET DEFAULT '';
+  )`,
+  `ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design'`,
+  `ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "images" TEXT NOT NULL DEFAULT '[]'`,
+  `ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "client" TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true`,
+  `ALTER TABLE "Project" ALTER COLUMN "client" SET DEFAULT ''`,
 
-  -- ===== Testimonial =====
-  CREATE TABLE IF NOT EXISTS "Testimonial" (
+  // ===== Testimonial =====
+  `CREATE TABLE IF NOT EXISTS "Testimonial" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "site" TEXT NOT NULL DEFAULT 'elux-design',
     "quote" TEXT NOT NULL DEFAULT '',
@@ -77,12 +76,12 @@ const MIGRATION_SQL = `
     "order" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
-  ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
+  )`,
+  `ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design'`,
+  `ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true`,
 
-  -- ===== Service =====
-  CREATE TABLE IF NOT EXISTS "Service" (
+  // ===== Service =====
+  `CREATE TABLE IF NOT EXISTS "Service" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "site" TEXT NOT NULL DEFAULT 'elux-design',
     "title" TEXT NOT NULL DEFAULT '',
@@ -92,13 +91,13 @@ const MIGRATION_SQL = `
     "active" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
-  ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "iconKey" TEXT NOT NULL DEFAULT 'building';
-  ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
+  )`,
+  `ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design'`,
+  `ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "iconKey" TEXT NOT NULL DEFAULT 'building'`,
+  `ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true`,
 
-  -- ===== AboutContent =====
-  CREATE TABLE IF NOT EXISTS "AboutContent" (
+  // ===== AboutContent =====
+  `CREATE TABLE IF NOT EXISTS "AboutContent" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "paragraph1" TEXT NOT NULL DEFAULT '',
     "paragraph2" TEXT NOT NULL DEFAULT '',
@@ -112,10 +111,10 @@ const MIGRATION_SQL = `
     "statSpecLabel" TEXT NOT NULL DEFAULT 'Core Specializations',
     "statSatLabel" TEXT NOT NULL DEFAULT 'Client Satisfaction %',
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
+  )`,
 
-  -- ===== SiteSettings =====
-  CREATE TABLE IF NOT EXISTS "SiteSettings" (
+  // ===== SiteSettings =====
+  `CREATE TABLE IF NOT EXISTS "SiteSettings" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "phone" TEXT NOT NULL DEFAULT '+679 000 0000',
     "email" TEXT NOT NULL DEFAULT 'hello@eluxdesign.com',
@@ -125,14 +124,16 @@ const MIGRATION_SQL = `
     "linkedin" TEXT NOT NULL DEFAULT '',
     "adminPassword" TEXT NOT NULL DEFAULT 'elux2026',
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-`;
+  )`,
+];
 
 export async function ensureMigrated() {
-  try {
-    await db.$executeRawUnsafe(MIGRATION_SQL);
-  } catch (e) {
-    console.error('[ensureMigrated] Migration failed — this should not happen with IF NOT EXISTS:', e);
-    throw e; // Let callers know — never swallow this error
+  for (const sql of MIGRATION_STATEMENTS) {
+    try {
+      await db.$executeRawUnsafe(sql);
+    } catch (e) {
+      console.error('[ensureMigrated] Statement failed:', sql.substring(0, 80), e);
+      throw e; // Never swallow — let callers handle the error
+    }
   }
 }
