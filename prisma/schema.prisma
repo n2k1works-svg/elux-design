@@ -17,6 +17,7 @@ model Project {
   description String
   image       String   @default("/project-1.png")
   images      String   @default("[]")
+  client      String   @default("")
   order       Int      @default(0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())

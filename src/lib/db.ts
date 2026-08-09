@@ -29,9 +29,14 @@ export const db =
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
 /**
- * Ensure database tables match the current Prisma schema.
+ * Ensure database tables and columns match the current Prisma schema.
  * On Vercel we can't run `prisma db push`, so we do it via raw SQL.
- * Uses CREATE IF NOT EXISTS so existing correct tables are left alone.
+ *
+ * Uses CREATE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS so:
+ * - Missing tables are created with the correct schema
+ * - Existing tables get any missing columns added
+ * - Existing data is never destroyed
+ * - The function is fully idempotent (safe to call on every cold start)
  */
 let _migrated = false;
 export async function ensureMigrated() {
@@ -39,31 +44,30 @@ export async function ensureMigrated() {
   _migrated = true;
   try {
     await db.$executeRawUnsafe(`
-      -- Drop old tables that have wrong columns (safe since we don't store user uploads)
-      DROP TABLE IF EXISTS "Testimonial" CASCADE;
-      DROP TABLE IF EXISTS "Service" CASCADE;
-      DROP TABLE IF EXISTS "Project" CASCADE;
-      DROP TABLE IF EXISTS "AboutContent" CASCADE;
-      DROP TABLE IF EXISTS "SiteSettings" CASCADE;
-
-      -- Recreate Project
-      CREATE TABLE "Project" (
+      -- ===== Project =====
+      CREATE TABLE IF NOT EXISTS "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "site" TEXT NOT NULL DEFAULT 'elux-design',
-        "title" TEXT NOT NULL,
+        "title" TEXT NOT NULL DEFAULT '',
         "location" TEXT NOT NULL DEFAULT '',
         "category" TEXT NOT NULL DEFAULT '',
         "description" TEXT NOT NULL DEFAULT '',
         "image" TEXT NOT NULL DEFAULT '/project-1.png',
         "images" TEXT NOT NULL DEFAULT '[]',
+        "client" TEXT NOT NULL DEFAULT '',
         "order" INTEGER NOT NULL DEFAULT 0,
         "active" BOOLEAN NOT NULL DEFAULT true,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
+      ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "images" TEXT NOT NULL DEFAULT '[]';
+      ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "client" TEXT NOT NULL DEFAULT '';
+      ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
+      ALTER TABLE "Project" ALTER COLUMN "client" SET DEFAULT '';
 
-      -- Recreate Testimonial
-      CREATE TABLE "Testimonial" (
+      -- ===== Testimonial =====
+      CREATE TABLE IF NOT EXISTS "Testimonial" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "site" TEXT NOT NULL DEFAULT 'elux-design',
         "quote" TEXT NOT NULL DEFAULT '',
@@ -74,9 +78,11 @@ export async function ensureMigrated() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
+      ALTER TABLE "Testimonial" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
 
-      -- Recreate Service
-      CREATE TABLE "Service" (
+      -- ===== Service =====
+      CREATE TABLE IF NOT EXISTS "Service" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "site" TEXT NOT NULL DEFAULT 'elux-design',
         "title" TEXT NOT NULL DEFAULT '',
@@ -87,9 +93,12 @@ export async function ensureMigrated() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "site" TEXT NOT NULL DEFAULT 'elux-design';
+      ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "iconKey" TEXT NOT NULL DEFAULT 'building';
+      ALTER TABLE "Service" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
 
-      -- Recreate AboutContent
-      CREATE TABLE "AboutContent" (
+      -- ===== AboutContent =====
+      CREATE TABLE IF NOT EXISTS "AboutContent" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "paragraph1" TEXT NOT NULL DEFAULT '',
         "paragraph2" TEXT NOT NULL DEFAULT '',
@@ -105,8 +114,8 @@ export async function ensureMigrated() {
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
-      -- Recreate SiteSettings
-      CREATE TABLE "SiteSettings" (
+      -- ===== SiteSettings =====
+      CREATE TABLE IF NOT EXISTS "SiteSettings" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "phone" TEXT NOT NULL DEFAULT '+679 000 0000',
         "email" TEXT NOT NULL DEFAULT 'hello@eluxdesign.com',
@@ -118,7 +127,7 @@ export async function ensureMigrated() {
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('[ensureMigrated] Tables recreated successfully.');
+    console.log('[ensureMigrated] Schema verified/updated successfully.');
   } catch (e) {
     _migrated = false; // allow retry
     console.error('[ensureMigrated] Failed:', e);

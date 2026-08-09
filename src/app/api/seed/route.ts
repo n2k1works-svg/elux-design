@@ -11,6 +11,7 @@ const SEED_PROJECTS = [
     description:
       "A breathtaking waterfront villa that seamlessly merges indoor and outdoor living. Featuring panoramic ocean views, sustainable timber construction, and an infinity pool that dissolves into the horizon. This project exemplifies Elux Design's commitment to luxury that respects its natural surroundings.",
     image: "/project-1.png",
+    client: "",
     order: 0,
   },
   {
@@ -20,6 +21,7 @@ const SEED_PROJECTS = [
     description:
       "A contemporary family residence in Lautoka that redefines tropical modernism. Clean geometric lines, expansive glass facades, and natural ventilation systems create a home that is both architecturally striking and deeply comfortable in Fiji's warm climate.",
     image: "/project-2.png",
+    client: "",
     order: 1,
   },
   {
@@ -29,6 +31,7 @@ const SEED_PROJECTS = [
     description:
       "A complete transformation of an existing coastal property into a world-class estate. The refurbishment preserved the structure's heritage character while introducing modern amenities, energy-efficient systems, and a redesigned landscape that frames stunning lagoon views.",
     image: "/project-3.png",
+    client: "",
     order: 2,
   },
 ];
