@@ -498,7 +498,7 @@ function HeroSection() {
 }
 
 /* ---------- About ---------- */
-function AboutSection() {
+function AboutSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView();
   const [about, setAbout] = useState<AboutContentT>(FALLBACK_ABOUT);
   const count1 = useCountUp(about.statYears, 1800, inView);
@@ -531,7 +531,7 @@ function AboutSection() {
       })
       .catch(() => { /* keep fallback */ });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   return (
     <section id="about" className="relative py-24 md:py-32 overflow-hidden">
@@ -578,7 +578,7 @@ function StatItem({ number, label }: { number: string; label: string }) {
 }
 
 /* ---------- Services ---------- */
-function ServicesSection() {
+function ServicesSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView();
   const [services, setServices] = useState<ServiceT[]>(FALLBACK_SERVICES);
 
@@ -594,7 +594,7 @@ function ServicesSection() {
       })
       .catch(() => { /* keep fallback */ });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   return (
     <section id="services" className="relative py-24 md:py-32 overflow-hidden">
@@ -685,7 +685,7 @@ function WhyEluxSection() {
 }
 
 /* ---------- Projects ---------- */
-function ProjectsSection() {
+function ProjectsSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView(0.05);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -709,7 +709,7 @@ function ProjectsSection() {
       .catch(() => { /* keep fallback */ })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   const totalPages = Math.max(1, Math.ceil(projects.length / PER_PAGE_DESKTOP));
   const goToPage = (p: number) => {
@@ -906,7 +906,7 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
 }
 
 /* ---------- Testimonials ---------- */
-function TestimonialsSection() {
+function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView(0.15);
   const [active, setActive] = useState(0);
   const [testimonials, setTestimonials] = useState<TestimonialT[]>(FALLBACK_TESTIMONIALS);
@@ -923,7 +923,7 @@ function TestimonialsSection() {
       })
       .catch(() => { /* keep fallback */ });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   const goTo = (i: number) => {
     setActive(i);
@@ -1170,7 +1170,7 @@ function BackToTop() {
 }
 
 /* ---------- Footer ---------- */
-function Footer() {
+function Footer({ refreshKey }: { refreshKey: number }) {
   const [settings, setSettings] = useState<SettingsT>(FALLBACK_SETTINGS);
 
   useEffect(() => {
@@ -1189,7 +1189,7 @@ function Footer() {
         }
       })
       .catch(() => { /* keep fallback */ });
-  }, []);
+  }, [refreshKey]);
 
   return (
     <footer className="border-t border-[rgba(201,168,76,0.1)]">
@@ -2461,6 +2461,13 @@ function AdminAboutTab() {
 
 export default function HomePage() {
   const [adminOpen, setAdminOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // When admin closes, bump refreshKey so all public sections refetch
+  const closeAdmin = useCallback(() => {
+    setAdminOpen(false);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   // Keyboard shortcut: Ctrl + Shift + A toggles the admin panel
   useEffect(() => {
@@ -2470,12 +2477,12 @@ export default function HomePage() {
         setAdminOpen((o) => !o);
       }
       if (e.key === "Escape") {
-        setAdminOpen(false);
+        closeAdmin();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [closeAdmin]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
@@ -2485,23 +2492,23 @@ export default function HomePage() {
       <main className="flex-1">
         <HeroSection />
         <div className="section-divider" />
-        <AboutSection />
+        <AboutSection refreshKey={refreshKey} />
         <div className="section-divider" />
-        <ServicesSection />
+        <ServicesSection refreshKey={refreshKey} />
         <div className="section-divider" />
         <ProcessSection />
         <div className="section-divider" />
         <WhyEluxSection />
         <div className="section-divider" />
-        <ProjectsSection />
+        <ProjectsSection refreshKey={refreshKey} />
         <div className="section-divider" />
-        <TestimonialsSection />
+        <TestimonialsSection refreshKey={refreshKey} />
         <div className="section-divider" />
         <ContactSection />
       </main>
-      <Footer />
+      <Footer refreshKey={refreshKey} />
       <BackToTop />
-      {adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}
+      {adminOpen && <AdminPanel onClose={closeAdmin} />}
     </div>
   );
 }
