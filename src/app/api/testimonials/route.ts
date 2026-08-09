@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureMigrated();
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
-    // Showing hidden items requires authentication
     const showAll = all && (await isAuthenticated());
     let testimonials = await db.testimonial.findMany({
       where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
     // Auto-seed if this site has no testimonials at all
-    if (testimonials.length === 0 && !showAll) {
+    if (testimonials.length === 0) {
       await seedIfEmpty();
       testimonials = await db.testimonial.findMany({
-        where: { site: SITE_ID, active: true },
+        where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       });
     }

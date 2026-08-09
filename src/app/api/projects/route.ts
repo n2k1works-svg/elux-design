@@ -25,10 +25,10 @@ export async function GET(req: NextRequest) {
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
     // Auto-seed if this site has no projects at all
-    if (projects.length === 0 && !showAll) {
+    if (projects.length === 0) {
       await seedIfEmpty();
       projects = await db.project.findMany({
-        where: { site: SITE_ID, active: true },
+        where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       });
     }
