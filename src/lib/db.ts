@@ -122,11 +122,21 @@ const CREATE_TABLES: Record<string, string> = {
  * 3. Query information_schema to find any extra NOT NULL columns
  *    left over from old schemas and make them nullable
  *
- * Fully idempotent — safe to call on every request.
+ * Cached for 60 seconds per serverless instance to avoid hammering
+ * the DB with ~36 raw SQL queries on every single API request.
  * Each statement runs individually (Prisma prepared statements
  * don't support multiple commands in one call).
  */
+let _migratedAt = 0;
+const MIGRATE_TTL_MS = 60_000; // 60 seconds
+
 export async function ensureMigrated() {
+  const now = Date.now();
+  if (now - _migratedAt < MIGRATE_TTL_MS) return;
+
+  console.log('[ensureMigrated] Running migration checks...');
+  const start = Date.now();
+
   // Step 1 & 2: Create tables and add missing columns
   for (const [table, createSql] of Object.entries(CREATE_TABLES)) {
     await db.$executeRawUnsafe(createSql);
@@ -178,4 +188,7 @@ export async function ensureMigrated() {
     console.error('[ensureMigrated] Extra column scan failed:', e);
     // Don't throw — this is a best-effort cleanup
   }
+
+  _migratedAt = Date.now();
+  console.log(`[ensureMigrated] Done in ${Date.now() - start}ms`);
 }

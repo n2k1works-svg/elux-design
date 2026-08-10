@@ -1842,14 +1842,21 @@ function AdminTestimonialsTab() {
     setLoading(true);
     try {
       const r = await fetch("/api/testimonials?all=1");
+      if (!r.ok) {
+        const errData = await r.json().catch(() => null);
+        const errMsg = errData?.error || `HTTP ${r.status}`;
+        console.error("Testimonials fetch failed:", errMsg);
+        showToast(`Failed to load testimonials: ${errMsg}`, "error");
+        return;
+      }
       const data = await r.json();
       if (Array.isArray(data)) setTestimonials(data);
     } catch {
-      /* ignore */
+      showToast("Network error loading testimonials.", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -2208,19 +2215,32 @@ function AdminPasswordTab() {
 function AdminServicesTab() {
   const { toast, showToast } = useAdminToast();
   const [items, setItems] = useState<{ id: string; title: string; description: string; iconKey: string; order: number; active: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<typeof items[number] | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
       const r = await fetch("/api/services?all=1");
+      if (!r.ok) {
+        const errData = await r.json().catch(() => null);
+        const errMsg = errData?.error || `HTTP ${r.status}`;
+        console.error("Services fetch failed:", errMsg);
+        showToast(`Failed to load services: ${errMsg}`, "error");
+        return;
+      }
       const data = await r.json();
       if (Array.isArray(data)) setItems(data);
-    } catch { /* use empty */ }
-  };
+    } catch {
+      showToast("Network error loading services.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const handleSave = async (item: typeof items[number]) => {
     setSaving(true);
@@ -2278,6 +2298,16 @@ function AdminServicesTab() {
       </div>
 
       <div className="grid gap-4">
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => <div key={i} className="h-24 rounded-xl liquid-glass animate-pulse" />)}
+          </div>
+        )}
+        {!loading && items.length === 0 && (
+          <div className="liquid-glass rounded-2xl p-10 text-center">
+            <p className="text-[#8A8478] font-light text-sm">No services yet. Click &quot;+ Add Service&quot; to create one.</p>
+          </div>
+        )}
         {items.map((item) => (
           <div key={item.id} className="liquid-glass rounded-xl p-5">
             {editing?.id === item.id ? (

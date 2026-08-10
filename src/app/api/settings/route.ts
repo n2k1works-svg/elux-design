@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated, verifyPassword, hashPassword } from "@/lib/auth";
 
 export async function GET() {
   try {
+    await ensureMigrated();
     let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
     if (!settings) {
       settings = await db.siteSettings.create({ data: { id: SITE_ID } });
@@ -18,6 +19,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    await ensureMigrated();
     const authed = await isAuthenticated();
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -48,6 +50,7 @@ export async function PUT(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
+    await ensureMigrated();
     const authed = await isAuthenticated();
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

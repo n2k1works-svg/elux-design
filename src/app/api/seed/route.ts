@@ -98,9 +98,9 @@ const SEED_ABOUT = {
   statSatLabel: "Client Satisfaction",
 };
 
-// Exported so GET endpoints can call it for auto-seeding
+// Exported so GET endpoints can call it for auto-seeding.
+// NOTE: Do NOT call ensureMigrated() here — the caller already ran it.
 export async function seedIfEmpty() {
-  await ensureMigrated();
   const result: Record<string, string> = {};
 
   // Settings
@@ -180,6 +180,7 @@ export async function seedIfEmpty() {
 // GET /api/seed — returns DB status + triggers seed if empty (no auth needed)
 export async function GET() {
   try {
+    await ensureMigrated();
     const result = await seedIfEmpty();
     return NextResponse.json({ site: SITE_ID, result });
   } catch (err) {
@@ -194,6 +195,7 @@ export async function POST() {
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
+    await ensureMigrated();
     const result = await seedIfEmpty();
     return NextResponse.json({ success: true, result });
   } catch (err) {
