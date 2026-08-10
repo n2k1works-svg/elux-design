@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
+export const dynamic = "force-dynamic";
+
 // Allow 3 contact form submissions per IP per hour
 const CONTACT_LIMIT = 3;
 const CONTACT_WINDOW_MS = 60 * 60 * 1000;

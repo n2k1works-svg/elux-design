@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { login, isAuthenticated } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
+export const dynamic = "force-dynamic";
+
 // Lock out after 5 failed attempts per IP in 15 minutes
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;

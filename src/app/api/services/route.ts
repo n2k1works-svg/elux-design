@@ -4,6 +4,8 @@ import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     await ensureMigrated();

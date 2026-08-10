@@ -508,8 +508,11 @@ function AboutSection({ refreshKey }: { refreshKey: number }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/about")
-      .then((r) => r.json())
+    fetch("/api/about?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: Partial<AboutContentT>) => {
         if (cancelled) return;
         if (data && typeof data === "object" && !('error' in data)) {
@@ -529,7 +532,7 @@ function AboutSection({ refreshKey }: { refreshKey: number }) {
           }));
         }
       })
-      .catch(() => { /* keep fallback */ });
+      .catch(() => { /* keep fallback on network/API error */ });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
@@ -584,15 +587,18 @@ function ServicesSection({ refreshKey }: { refreshKey: number }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/services")
-      .then((r) => r.json())
+    fetch("/api/services?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: ServiceT[]) => {
         if (cancelled) return;
         if (Array.isArray(data) && data.length > 0) {
           setServices(data);
         }
       })
-      .catch(() => { /* keep fallback */ });
+      .catch(() => { /* keep fallback on network/API error */ });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
@@ -698,15 +704,18 @@ function ProjectsSection({ refreshKey }: { refreshKey: number }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/projects")
-      .then((r) => r.json())
+    fetch("/api/projects?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: ProjectT[]) => {
         if (cancelled) return;
         if (Array.isArray(data) && data.length > 0) {
           setProjects(data);
         }
       })
-      .catch(() => { /* keep fallback */ })
+      .catch(() => { /* keep fallback on network/API error */ })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [refreshKey]);
@@ -912,8 +921,11 @@ function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
   const [testimonials, setTestimonials] = useState<TestimonialT[]>(FALLBACK_TESTIMONIALS);
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/testimonials")
-      .then((r) => r.json())
+    fetch("/api/testimonials?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: TestimonialT[]) => {
         if (cancelled) return;
         if (Array.isArray(data)) {
@@ -921,7 +933,7 @@ function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
           if (data.length > 0) setActive(0);
         }
       })
-      .catch(() => { /* keep fallback */ });
+      .catch(() => { /* keep fallback on network/API error */ });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
@@ -1019,7 +1031,7 @@ function ContactSection() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/settings")
+    fetch("/api/settings?_t=" + Date.now())
       .then((r) => {
         if (!r.ok) throw new Error("Settings fetch failed");
         return r.json();
@@ -1174,8 +1186,11 @@ function Footer({ refreshKey }: { refreshKey: number }) {
   const [settings, setSettings] = useState<SettingsT>(FALLBACK_SETTINGS);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
+    fetch("/api/settings?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: Partial<SettingsT>) => {
         if (data && typeof data === "object" && !("error" in data)) {
           setSettings((prev) => ({
@@ -1188,7 +1203,7 @@ function Footer({ refreshKey }: { refreshKey: number }) {
           }));
         }
       })
-      .catch(() => { /* keep fallback */ });
+      .catch(() => { /* keep fallback on network/API error */ });
   }, [refreshKey]);
 
   return (
@@ -1531,7 +1546,7 @@ function AdminProjectsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/projects?all=1");
+      const r = await fetch("/api/projects?all=1&_t=" + Date.now());
       if (!r.ok) {
         const errData = await r.json().catch(() => null);
         const errMsg = errData?.error || `HTTP ${r.status}`;
@@ -1841,7 +1856,7 @@ function AdminTestimonialsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/testimonials?all=1");
+      const r = await fetch("/api/testimonials?all=1&_t=" + Date.now());
       if (!r.ok) {
         const errData = await r.json().catch(() => null);
         const errMsg = errData?.error || `HTTP ${r.status}`;
@@ -2050,8 +2065,11 @@ function AdminSettingsTab() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
+    fetch("/api/settings?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data: Partial<SettingsT>) => {
         if (data && typeof data === "object") {
           setSettings({
@@ -2223,7 +2241,7 @@ function AdminServicesTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/services?all=1");
+      const r = await fetch("/api/services?all=1&_t=" + Date.now());
       if (!r.ok) {
         const errData = await r.json().catch(() => null);
         const errMsg = errData?.error || `HTTP ${r.status}`;
@@ -2404,7 +2422,10 @@ function AdminAboutTab() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/about").then((r) => r.json()).then((data) => {
+    fetch("/api/about?_t=" + Date.now()).then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }).then((data) => {
       if (data && data.id) {
         setForm({
           paragraph1: data.paragraph1 || "", paragraph2: data.paragraph2 || "", paragraph3: data.paragraph3 || "",

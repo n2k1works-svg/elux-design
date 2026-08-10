@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/debug — shows DB state, runs ensureMigrated first
 export async function GET() {
   try {

@@ -4,6 +4,8 @@ import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
+export const dynamic = "force-dynamic";
+
 function parseImages(p: { images: string | null }): string[] {
   try {
     const parsed = p.images ? JSON.parse(p.images) : [];

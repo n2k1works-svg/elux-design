@@ -3,6 +3,8 @@ import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 const SEED_PROJECTS = [
   {
     title: "Fantasy Island Villa",
