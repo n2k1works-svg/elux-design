@@ -61,6 +61,14 @@ type SettingsT = {
   linkedin: string;
 };
 
+type SiteData = {
+  about: Partial<AboutContentT> | null;
+  services: ServiceT[];
+  projects: ProjectT[];
+  testimonials: TestimonialT[];
+  settings: Partial<SettingsT> | null;
+};
+
 /* ========================================================================
    DATA
    ======================================================================== */
@@ -216,14 +224,9 @@ function useCountUp(end: number, duration = 2000, trigger = false) {
    ======================================================================== */
 
 /* ---------- Page Loader ---------- */
-function PageLoader() {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 2000);
-    return () => clearTimeout(t);
-  }, []);
+function PageLoader({ ready }: { ready: boolean }) {
   return (
-    <div className={`page-loader ${loaded ? "loaded" : ""}`}>
+    <div className={`page-loader ${ready ? "loaded" : ""}`}>
       <div className="loader-logo">
         <img src="/elux-final.png" alt="Elux Design" className="h-16 w-auto object-contain" />
       </div>
@@ -390,43 +393,23 @@ function HeroSection() {
 }
 
 /* ---------- About ---------- */
-function AboutSection({ refreshKey }: { refreshKey: number }) {
+function AboutSection({ about, refreshKey }: { about: Partial<AboutContentT> | null; refreshKey: number }) {
   const { ref, inView } = useInView();
-  const [about, setAbout] = useState<AboutContentT | null>(null);
   const count1 = useCountUp(about?.statYears ?? 0, 1800, inView);
   const count2 = useCountUp(about?.statProjects ?? 0, 2000, inView);
   const count3 = useCountUp(about?.statSpecializations ?? 0, 1200, inView);
   const count4 = useCountUp(about?.statSatisfaction ?? 0, 2200, inView);
 
+  // After admin edits, refetch just about from batch endpoint
+  const [localAbout, setLocalAbout] = useState(about);
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/about?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: Partial<AboutContentT>) => {
-        if (cancelled) return;
-        if (data && typeof data === "object" && !("error" in data)) {
-          setAbout((prev) => ({
-            id: data.id ?? prev?.id ?? "elux-design",
-            paragraph1: data.paragraph1 ?? prev?.paragraph1 ?? "",
-            paragraph2: data.paragraph2 ?? prev?.paragraph2 ?? "",
-            paragraph3: data.paragraph3 ?? prev?.paragraph3 ?? "",
-            statYears: data.statYears ?? prev?.statYears ?? 0,
-            statProjects: data.statProjects ?? prev?.statProjects ?? 0,
-            statSpecializations: data.statSpecializations ?? prev?.statSpecializations ?? 0,
-            statSatisfaction: data.statSatisfaction ?? prev?.statSatisfaction ?? 0,
-            statYearsLabel: data.statYearsLabel ?? prev?.statYearsLabel ?? "",
-            statProjectsLabel: data.statProjectsLabel ?? prev?.statProjectsLabel ?? "",
-            statSpecLabel: data.statSpecLabel ?? prev?.statSpecLabel ?? "",
-            statSatLabel: data.statSatLabel ?? prev?.statSatLabel ?? "",
-          }));
-        }
-      })
-      .catch(() => { /* keep fallback on network/API error */ });
-    return () => { cancelled = true; };
+    if (refreshKey === 0) return; // initial load already has data
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SiteData) => { if (data.about) setLocalAbout(data.about); })
+      .catch(() => {});
   }, [refreshKey]);
+  const a = refreshKey === 0 ? about : localAbout;
 
   return (
     <section id="about" className="relative py-24 md:py-32 overflow-hidden">
@@ -442,19 +425,19 @@ function AboutSection({ refreshKey }: { refreshKey: number }) {
         </div>
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph1}</p>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph2}</p>
-            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{about?.paragraph3}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph1}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph2}</p>
+            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{a?.paragraph3}</p>
           </div>
           <div className={`transition-all duration-700 delay-300 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8 space-y-8">
-              <StatItem number={`${count1}+`} label={about?.statYearsLabel ?? ""} />
+              <StatItem number={`${count1}+`} label={a?.statYearsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count2}+`} label={about?.statProjectsLabel ?? ""} />
+              <StatItem number={`${count2}+`} label={a?.statProjectsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count3}`} label={about?.statSpecLabel ?? ""} />
+              <StatItem number={`${count3}`} label={a?.statSpecLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count4}%`} label={about?.statSatLabel ?? ""} />
+              <StatItem number={`${count4}%`} label={a?.statSatLabel ?? ""} />
             </div>
           </div>
         </div>
@@ -473,25 +456,15 @@ function StatItem({ number, label }: { number: string; label: string }) {
 }
 
 /* ---------- Services ---------- */
-function ServicesSection({ refreshKey }: { refreshKey: number }) {
+function ServicesSection({ services: initialServices, refreshKey }: { services: ServiceT[]; refreshKey: number }) {
   const { ref, inView } = useInView();
-  const [services, setServices] = useState<ServiceT[]>([]);
-
+  const [services, setServices] = useState(initialServices);
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/services?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: ServiceT[]) => {
-        if (cancelled) return;
-        if (Array.isArray(data) && data.length > 0) {
-          setServices(data);
-        }
-      })
-      .catch(() => { /* keep fallback on network/API error */ });
-    return () => { cancelled = true; };
+    if (refreshKey === 0) return;
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SiteData) => { if (data.services?.length) setServices(data.services); })
+      .catch(() => {});
   }, [refreshKey]);
 
   return (
@@ -583,33 +556,22 @@ function WhyEluxSection() {
 }
 
 /* ---------- Projects ---------- */
-function ProjectsSection({ refreshKey }: { refreshKey: number }) {
+function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: ProjectT[]; refreshKey: number }) {
   const { ref, inView } = useInView(0.05);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [projects, setProjects] = useState<ProjectT[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState(initialProjects);
   const [page, setPage] = useState(0);
   const PER_PAGE_DESKTOP = 3;
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/projects?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: ProjectT[]) => {
-        if (cancelled) return;
-        if (Array.isArray(data) && data.length > 0) {
-          setProjects(data);
-        }
-      })
-      .catch(() => { /* keep fallback on network/API error */ })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    if (refreshKey === 0) return;
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SiteData) => { if (data.projects?.length) setProjects(data.projects); })
+      .catch(() => {});
   }, [refreshKey]);
 
   const totalPages = Math.max(1, Math.ceil(projects.length / PER_PAGE_DESKTOP));
@@ -639,13 +601,10 @@ function ProjectsSection({ refreshKey }: { refreshKey: number }) {
 
           {/* Mobile: horizontal scroll */}
           <div className="md:hidden flex gap-5 overflow-x-auto projects-scroll-mobile pb-4 snap-x snap-mandatory -mx-6 px-6">
-            {loading && projects.length === 0 ? (
-              <div className="min-w-[280px] h-[420px] rounded-2xl liquid-glass animate-pulse" />
-            ) : null}
             {projects.map((project, i) => (
               <div
                 key={project.id}
-                className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 min-w-[280px] snap-center flex-shrink-0 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} ${loading ? "animate-pulse" : ""}`}
+                className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 min-w-[280px] snap-center flex-shrink-0 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
                 onClick={() => setSelectedProject(selectedProject === i ? null : i)}
               >
@@ -661,17 +620,10 @@ function ProjectsSection({ refreshKey }: { refreshKey: number }) {
                 className="flex gap-6 transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${page * 100}%)` }}
               >
-                {loading && projects.length === 0 ? (
-                  <>
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
-                    <div className="h-[420px] rounded-2xl liquid-glass animate-pulse flex-shrink-0" style={{ width: 'calc(33.333% - 1rem)' }} />
-                  </>
-                ) : null}
                 {projects.map((project, i) => (
                   <div
                     key={project.id}
-                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 flex-shrink-0 ${loading ? "animate-pulse" : ""}`}
+                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 flex-shrink-0`}
                     style={{ width: 'calc(33.333% - 1rem)' }}
                     onClick={() => setSelectedProject(selectedProject === i ? null : i)}
                   >
@@ -807,26 +759,16 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
 }
 
 /* ---------- Testimonials ---------- */
-function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
+function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: { testimonials: TestimonialT[]; refreshKey: number }) {
   const { ref, inView } = useInView(0.15);
   const [active, setActive] = useState(0);
-  const [testimonials, setTestimonials] = useState<TestimonialT[]>([]);
+  const [testimonials, setTestimonials] = useState(initialTestimonials);
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/testimonials?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: TestimonialT[]) => {
-        if (cancelled) return;
-        if (Array.isArray(data)) {
-          setTestimonials(data);
-          if (data.length > 0) setActive(0);
-        }
-      })
-      .catch(() => { /* keep fallback on network/API error */ });
-    return () => { cancelled = true; };
+    if (refreshKey === 0) return;
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SiteData) => { if (data.testimonials?.length) setTestimonials(data.testimonials); })
+      .catch(() => {});
   }, [refreshKey]);
 
   const goTo = (i: number) => {
@@ -916,52 +858,10 @@ function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
 }
 
 /* ---------- Contact ---------- */
-function ContactSection() {
+function ContactSection({ settings: initialSettings, serviceTitles }: { settings: SettingsT; serviceTitles: string[] }) {
   const { ref, inView } = useInView();
   const [submitted, setSubmitted] = useState(false);
-  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
-  const [serviceTitles, setServiceTitles] = useState<string[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/settings?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error("Settings fetch failed");
-        return r.json();
-      })
-      .then((data: Partial<SettingsT>) => {
-        if (cancelled) return;
-        if (data && typeof data === "object" && !("error" in data)) {
-          setSettings((prev) => ({
-            phone: data.phone ?? prev.phone,
-            email: data.email ?? prev.email,
-            location: data.location ?? prev.location,
-            facebook: data.facebook ?? prev.facebook,
-            instagram: data.instagram ?? prev.instagram,
-            linkedin: data.linkedin ?? prev.linkedin,
-          }));
-        }
-      })
-      .catch((err) => { console.error("Settings fetch error:", err); });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/services?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error("Services fetch failed");
-        return r.json();
-      })
-      .then((data: ServiceT[]) => {
-        if (cancelled) return;
-        if (Array.isArray(data)) {
-          setServiceTitles(data.filter((s) => s.active).map((s) => s.title));
-        }
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  const [settings, setSettings] = useState(initialSettings);
 
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
@@ -1092,29 +992,7 @@ function BackToTop() {
 }
 
 /* ---------- Footer ---------- */
-function Footer({ refreshKey }: { refreshKey: number }) {
-  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
-
-  useEffect(() => {
-    fetch("/api/settings?_t=" + Date.now())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: Partial<SettingsT>) => {
-        if (data && typeof data === "object" && !("error" in data)) {
-          setSettings((prev) => ({
-            phone: data.phone ?? prev.phone,
-            email: data.email ?? prev.email,
-            location: data.location ?? prev.location,
-            facebook: data.facebook ?? prev.facebook,
-            instagram: data.instagram ?? prev.instagram,
-            linkedin: data.linkedin ?? prev.linkedin,
-          }));
-        }
-      })
-      .catch(() => { /* keep fallback on network/API error */ });
-  }, [refreshKey]);
+function Footer({ settings }: { settings: SettingsT }) {
 
   return (
     <footer className="border-t border-[rgba(201,168,76,0.1)]">
@@ -2433,6 +2311,27 @@ function AdminAboutTab() {
 export default function HomePage() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [data, setData] = useState<SiteData | null>(null);
+  const [ready, setReady] = useState(false);
+
+  // Single batched fetch — replaces 6+ separate API calls
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((json: SiteData) => {
+        if (cancelled) return;
+        if (json && typeof json === "object" && !("error" in json)) {
+          setData(json);
+        }
+      })
+      .catch((err) => console.error("[HomePage] content fetch failed:", err))
+      .finally(() => { if (!cancelled) setReady(true); });
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
   // When admin closes, bump refreshKey so all public sections refetch
   const closeAdmin = useCallback(() => {
@@ -2455,29 +2354,39 @@ export default function HomePage() {
     return () => window.removeEventListener("keydown", handler);
   }, [closeAdmin]);
 
+  const settings: SettingsT = {
+    phone: data?.settings?.phone ?? "",
+    email: data?.settings?.email ?? "",
+    location: data?.settings?.location ?? "",
+    facebook: data?.settings?.facebook ?? "",
+    instagram: data?.settings?.instagram ?? "",
+    linkedin: data?.settings?.linkedin ?? "",
+  };
+  const serviceTitles = (data?.services ?? []).map((s) => s.title);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
-      <PageLoader />
+      <PageLoader ready={ready} />
       <ScrollProgress />
       <Navbar />
       <main className="flex-1">
         <HeroSection />
         <div className="section-divider" />
-        <AboutSection refreshKey={refreshKey} />
+        <AboutSection about={data?.about ?? null} refreshKey={refreshKey} />
         <div className="section-divider" />
-        <ServicesSection refreshKey={refreshKey} />
+        <ServicesSection services={data?.services ?? []} refreshKey={refreshKey} />
         <div className="section-divider" />
         <ProcessSection />
         <div className="section-divider" />
         <WhyEluxSection />
         <div className="section-divider" />
-        <ProjectsSection refreshKey={refreshKey} />
+        <ProjectsSection projects={data?.projects ?? []} refreshKey={refreshKey} />
         <div className="section-divider" />
-        <TestimonialsSection refreshKey={refreshKey} />
+        <TestimonialsSection testimonials={data?.testimonials ?? []} refreshKey={refreshKey} />
         <div className="section-divider" />
-        <ContactSection />
+        <ContactSection settings={settings} serviceTitles={serviceTitles} />
       </main>
-      <Footer refreshKey={refreshKey} />
+      <Footer settings={settings} />
       <BackToTop />
       {adminOpen && <AdminPanel onClose={closeAdmin} />}
     </div>
