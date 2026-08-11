@@ -1382,7 +1382,7 @@ function AdminLogin({ onSuccess, onClose }: { onSuccess: () => void; onClose: ()
 }
 
 /* ---------- Admin Dashboard ---------- */
-type AdminTab = "projects" | "testimonials" | "services" | "about" | "settings" | "password";
+type AdminTab = "projects" | "testimonials" | "services" | "about" | "settings" | "password" | "legal";
 
 function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: () => void }) {
   const [tab, setTab] = useState<AdminTab>("projects");
@@ -1424,6 +1424,10 @@ function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: 
     {
       id: "password", label: "Password",
       icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>,
+    },
+    {
+      id: "legal", label: "Legal Pages",
+      icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>,
     },
   ];
 
@@ -1484,6 +1488,7 @@ function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: 
         {tab === "about" && <AdminAboutTab />}
         {tab === "settings" && <AdminSettingsTab />}
         {tab === "password" && <AdminPasswordTab />}
+        {tab === "legal" && <AdminLegalTab />}
       </div>
     </div>
   );
@@ -2565,6 +2570,139 @@ export default function HomePage() {
       <Footer refreshKey={refreshKey} />
       <BackToTop />
       {adminOpen && <AdminPanel onClose={closeAdmin} />}
+    </div>
+  );
+}
+
+/* ---------- Admin Legal Tab ---------- */
+function AdminLegalTab() {
+  const [sub, setSub] = useState<"terms" | "privacy">("terms");
+  const [content, setContent] = useState("");
+  const [original, setOriginal] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
+  const [msg, setMsg] = useState("");
+  const mounted = useRef(false);
+
+  const load = useCallback((type: "terms" | "privacy") => {
+    setMsg("");
+    fetch(`/api/legal/${type}?_t=` + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (data && typeof data === "object" && !("error" in data)) {
+          const html = data.content ?? "";
+          setContent(html);
+          setOriginal(html);
+          setLastUpdated(data.lastUpdated ?? "");
+        }
+      })
+      .catch(() => setMsg("Failed to load"));
+  }, []);
+
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }
+    load(sub);
+  }, [sub, load]);
+
+  // Initial load
+  useEffect(() => { load("terms"); }, [load]);
+
+  const save = async () => {
+    setSaving(true);
+    setMsg("");
+    try {
+      const r = await fetch(`/api/legal/${sub}?_t=` + Date.now(), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      setOriginal(content);
+      setLastUpdated(data.lastUpdated ?? "");
+      setMsg("Saved successfully");
+    } catch {
+      setMsg("Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasChanges = content !== original;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display text-2xl text-[#F5F0E8] font-light">Legal Pages</h2>
+          <p className="text-xs text-[#8A8478] mt-1">Edit Terms of Service and Privacy Policy content</p>
+        </div>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setSub("terms")}
+          className={`text-xs tracking-[0.1em] uppercase px-4 py-2 rounded-lg transition-all duration-300 ${sub === "terms" ? "bg-[rgba(201,168,76,0.15)] text-[#C9A84C] border border-[rgba(201,168,76,0.3)]" : "text-[#8A8478] border border-transparent hover:text-[#F5F0E8]"}`}
+        >Terms of Service</button>
+        <button
+          onClick={() => setSub("privacy")}
+          className={`text-xs tracking-[0.1em] uppercase px-4 py-2 rounded-lg transition-all duration-300 ${sub === "privacy" ? "bg-[rgba(201,168,76,0.15)] text-[#C9A84C] border border-[rgba(201,168,76,0.3)]" : "text-[#8A8478] border border-transparent hover:text-[#F5F0E8]"}`}
+        >Privacy Policy</button>
+      </div>
+
+      {lastUpdated && (
+        <p className="text-xs text-[#8A8478] mb-4">Last updated: {lastUpdated}</p>
+      )}
+
+      {/* Editor */}
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="w-full h-[60vh] bg-[#111] border border-[rgba(201,168,76,0.15)] rounded-xl p-5 text-sm text-[#F5F0E8]/90 font-mono leading-relaxed resize-none focus:outline-none focus:border-[rgba(201,168,76,0.4)] transition-colors"
+        placeholder="HTML content..."
+      />
+
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-3">
+          {hasChanges && (
+            <span className="text-xs text-[#C9A84C]/70">Unsaved changes</span>
+          )}
+          {msg && (
+            <span className={`text-xs ${msg.includes("failed") ? "text-red-400" : "text-green-400"}`}>{msg}</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {hasChanges && (
+            <button
+              onClick={() => { setContent(original); setMsg(""); }}
+              className="text-xs tracking-[0.1em] uppercase text-[#8A8478] px-4 py-2.5 rounded-lg border border-[rgba(201,168,76,0.25)] hover:bg-[rgba(201,168,76,0.08)] transition-all"
+            >Discard</button>
+          )}
+          <button
+            onClick={save}
+            disabled={saving || !hasChanges}
+            className="inline-flex items-center gap-2 text-xs tracking-[0.1em] uppercase font-medium rounded-lg px-5 py-2.5 bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#d4b35a] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+
+      {/* Preview link */}
+      <div className="mt-6 pt-6 border-t border-[rgba(201,168,76,0.1)]">
+        <a
+          href={`/${sub}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-[#8A8478] hover:text-[#C9A84C] transition-colors"
+        >
+          View live page &rarr;
+        </a>
+      </div>
     </div>
   );
 }

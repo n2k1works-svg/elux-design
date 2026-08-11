@@ -40,6 +40,7 @@ const KNOWN_COLUMNS: Record<string, string[]> = {
   Service: ['id','site','title','description','iconKey','order','active','createdAt','updatedAt'],
   AboutContent: ['id','paragraph1','paragraph2','paragraph3','statYears','statProjects','statSpecializations','statSatisfaction','statYearsLabel','statProjectsLabel','statSpecLabel','statSatLabel','updatedAt'],
   SiteSettings: ['id','phone','email','location','facebook','instagram','linkedin','adminPassword','updatedAt'],
+  LegalContent: ['type','site','content','lastUpdated','createdAt','updatedAt'],
 };
 
 /*
@@ -111,6 +112,14 @@ const CREATE_TABLES: Record<string, string> = {
     "adminPassword" TEXT NOT NULL DEFAULT 'elux2026',
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  LegalContent: `CREATE TABLE IF NOT EXISTS "LegalContent" (
+    "type" TEXT NOT NULL PRIMARY KEY,
+    "site" TEXT NOT NULL DEFAULT 'elux-design',
+    "content" TEXT NOT NULL DEFAULT '',
+    "lastUpdated" TEXT NOT NULL DEFAULT '',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
 };
 
 /**
@@ -165,7 +174,7 @@ export async function ensureMigrated() {
       SELECT table_name, column_name
       FROM information_schema.columns
       WHERE table_schema = 'public'
-        AND table_name IN ('Project', 'Testimonial', 'Service', 'AboutContent', 'SiteSettings')
+        AND table_name IN ('Project', 'Testimonial', 'Service', 'AboutContent', 'SiteSettings', 'LegalContent')
         AND is_nullable = 'NO'
         AND column_name NOT IN (
           SELECT unnest(ARRAY[

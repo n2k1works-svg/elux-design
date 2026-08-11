@@ -207,6 +207,40 @@
   50% { background-position: 100% 50%; }
 }
 
+/* === LEGAL CONTENT (TOS / Privacy rendered from DB) === */
+.legal-content h2 {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #C9A84C;
+  margin-bottom: 1rem;
+}
+.legal-content p {
+  margin-bottom: 0.75rem;
+}
+.legal-content ul {
+  list-style: disc;
+  list-style-position: inside;
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+.legal-content strong {
+  font-weight: 400;
+  color: #F5F0E8;
+}
+.legal-content .contact-box {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background: rgba(201,168,76,0.05);
+  border: 1px solid rgba(201,168,76,0.1);
+}
+.legal-content .contact-box strong {
+  color: #C9A84C;
+}
+
 /* === FLOATING ORB ANIMATIONS === */
 @keyframes float-slow {
   0%, 100% { transform: translate(0, 0) scale(1); }

@@ -75,3 +75,12 @@ model SiteSettings {
   adminPassword String   @default("elux2026")
   updatedAt     DateTime @updatedAt
 }
+
+model LegalContent {
+  type        String   @id // "terms" or "privacy"
+  site        String   @default("elux-design")
+  content     String   @default("")
+  lastUpdated String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
