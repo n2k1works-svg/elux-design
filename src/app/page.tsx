@@ -500,11 +500,11 @@ function HeroSection() {
 /* ---------- About ---------- */
 function AboutSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView();
-  const [about, setAbout] = useState<AboutContentT>(FALLBACK_ABOUT);
-  const count1 = useCountUp(about.statYears, 1800, inView);
-  const count2 = useCountUp(about.statProjects, 2000, inView);
-  const count3 = useCountUp(about.statSpecializations, 1200, inView);
-  const count4 = useCountUp(about.statSatisfaction, 2200, inView);
+  const [about, setAbout] = useState<AboutContentT | null>(null);
+  const count1 = useCountUp(about?.statYears ?? 0, 1800, inView);
+  const count2 = useCountUp(about?.statProjects ?? 0, 2000, inView);
+  const count3 = useCountUp(about?.statSpecializations ?? 0, 1200, inView);
+  const count4 = useCountUp(about?.statSatisfaction ?? 0, 2200, inView);
 
   useEffect(() => {
     let cancelled = false;
@@ -515,20 +515,20 @@ function AboutSection({ refreshKey }: { refreshKey: number }) {
       })
       .then((data: Partial<AboutContentT>) => {
         if (cancelled) return;
-        if (data && typeof data === "object" && !('error' in data)) {
+        if (data && typeof data === "object" && !("error" in data)) {
           setAbout((prev) => ({
-            id: data.id ?? prev.id,
-            paragraph1: data.paragraph1 ?? prev.paragraph1,
-            paragraph2: data.paragraph2 ?? prev.paragraph2,
-            paragraph3: data.paragraph3 ?? prev.paragraph3,
-            statYears: data.statYears ?? prev.statYears,
-            statProjects: data.statProjects ?? prev.statProjects,
-            statSpecializations: data.statSpecializations ?? prev.statSpecializations,
-            statSatisfaction: data.statSatisfaction ?? prev.statSatisfaction,
-            statYearsLabel: data.statYearsLabel ?? prev.statYearsLabel,
-            statProjectsLabel: data.statProjectsLabel ?? prev.statProjectsLabel,
-            statSpecLabel: data.statSpecLabel ?? prev.statSpecLabel,
-            statSatLabel: data.statSatLabel ?? prev.statSatLabel,
+            id: data.id ?? prev?.id ?? "elux-design",
+            paragraph1: data.paragraph1 ?? prev?.paragraph1 ?? "",
+            paragraph2: data.paragraph2 ?? prev?.paragraph2 ?? "",
+            paragraph3: data.paragraph3 ?? prev?.paragraph3 ?? "",
+            statYears: data.statYears ?? prev?.statYears ?? 0,
+            statProjects: data.statProjects ?? prev?.statProjects ?? 0,
+            statSpecializations: data.statSpecializations ?? prev?.statSpecializations ?? 0,
+            statSatisfaction: data.statSatisfaction ?? prev?.statSatisfaction ?? 0,
+            statYearsLabel: data.statYearsLabel ?? prev?.statYearsLabel ?? "",
+            statProjectsLabel: data.statProjectsLabel ?? prev?.statProjectsLabel ?? "",
+            statSpecLabel: data.statSpecLabel ?? prev?.statSpecLabel ?? "",
+            statSatLabel: data.statSatLabel ?? prev?.statSatLabel ?? "",
           }));
         }
       })
@@ -550,19 +550,19 @@ function AboutSection({ refreshKey }: { refreshKey: number }) {
         </div>
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about.paragraph1}</p>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about.paragraph2}</p>
-            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{about.paragraph3}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph1}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph2}</p>
+            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{about?.paragraph3}</p>
           </div>
           <div className={`transition-all duration-700 delay-300 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8 space-y-8">
-              <StatItem number={`${count1}+`} label={about.statYearsLabel} />
+              <StatItem number={`${count1}+`} label={about?.statYearsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count2}+`} label={about.statProjectsLabel} />
+              <StatItem number={`${count2}+`} label={about?.statProjectsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count3}`} label={about.statSpecLabel} />
+              <StatItem number={`${count3}`} label={about?.statSpecLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count4}%`} label={about.statSatLabel} />
+              <StatItem number={`${count4}%`} label={about?.statSatLabel ?? ""} />
             </div>
           </div>
         </div>
@@ -583,7 +583,7 @@ function StatItem({ number, label }: { number: string; label: string }) {
 /* ---------- Services ---------- */
 function ServicesSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView();
-  const [services, setServices] = useState<ServiceT[]>(FALLBACK_SERVICES);
+  const [services, setServices] = useState<ServiceT[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -697,7 +697,7 @@ function ProjectsSection({ refreshKey }: { refreshKey: number }) {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [projects, setProjects] = useState<ProjectT[]>(FALLBACK_PROJECTS);
+  const [projects, setProjects] = useState<ProjectT[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const PER_PAGE_DESKTOP = 3;
@@ -918,7 +918,7 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
 function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
   const { ref, inView } = useInView(0.15);
   const [active, setActive] = useState(0);
-  const [testimonials, setTestimonials] = useState<TestimonialT[]>(FALLBACK_TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState<TestimonialT[]>([]);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/testimonials?_t=" + Date.now())
