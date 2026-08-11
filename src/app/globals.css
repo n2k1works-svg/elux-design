@@ -484,7 +484,7 @@ select.form-input-glass option {
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
+  animation: fadeInUp 0.5s ease-out forwards;
   opacity: 0;
 }
 
@@ -498,14 +498,14 @@ select.form-input-glass option {
   opacity: 0;
 }
 
-.animate-delay-100 { animation-delay: 0.1s; }
-.animate-delay-200 { animation-delay: 0.2s; }
-.animate-delay-300 { animation-delay: 0.3s; }
-.animate-delay-400 { animation-delay: 0.4s; }
-.animate-delay-500 { animation-delay: 0.5s; }
-.animate-delay-600 { animation-delay: 0.6s; }
-.animate-delay-700 { animation-delay: 0.7s; }
-.animate-delay-800 { animation-delay: 0.8s; }
+.animate-delay-100 { animation-delay: 0.05s; }
+.animate-delay-200 { animation-delay: 0.1s; }
+.animate-delay-300 { animation-delay: 0.15s; }
+.animate-delay-400 { animation-delay: 0.2s; }
+.animate-delay-500 { animation-delay: 0.25s; }
+.animate-delay-600 { animation-delay: 0.3s; }
+.animate-delay-700 { animation-delay: 0.35s; }
+.animate-delay-800 { animation-delay: 0.4s; }
 
 /* === MOBILE MENU === */
 .mobile-menu-enter {

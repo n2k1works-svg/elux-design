@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, ensureMigrated } from "@/lib/db";
+import { db, ensureTablesExist } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
-    await ensureMigrated();
+    await ensureTablesExist();
 
     // Fire all queries in parallel — one cold start, one migration check,
     // but all DB reads happen concurrently

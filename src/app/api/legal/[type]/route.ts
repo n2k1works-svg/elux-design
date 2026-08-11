@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureMigrated } from "@/lib/db";
+import { db, ensureTablesExist } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -172,7 +172,7 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
-    await ensureMigrated();
+    await ensureTablesExist();
     const { type } = await params;
     if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
       return NextResponse.json({ error: "Invalid type. Use 'terms' or 'privacy'." }, { status: 400 });
@@ -215,7 +215,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    await ensureMigrated();
+    await ensureTablesExist();
     const { type } = await params;
     if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
       return NextResponse.json({ error: "Invalid type. Use 'terms' or 'privacy'." }, { status: 400 });

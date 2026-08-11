@@ -223,20 +223,7 @@ function useCountUp(end: number, duration = 2000, trigger = false) {
    COMPONENTS
    ======================================================================== */
 
-/* ---------- Page Loader ---------- */
-function PageLoader({ ready }: { ready: boolean }) {
-  return (
-    <div className={`page-loader ${ready ? "loaded" : ""}`}>
-      <div className="loader-logo">
-        <img src="/elux-final.png" alt="Elux Design" className="h-16 w-auto object-contain" />
-      </div>
-      <div className="loader-bar">
-        <div className="loader-bar-fill" />
-      </div>
-      <p className="mt-4 text-[0.65rem] tracking-[0.4em] uppercase text-[#8A8478]">Loading Experience</p>
-    </div>
-  );
-}
+/* ---------- (Page Loader removed — content renders instantly) ---------- */
 
 /* ---------- Scroll Progress ---------- */
 function ScrollProgress() {
@@ -370,12 +357,12 @@ function HeroSection() {
               <br />
               <span className="text-[#F5F0E8]">Tomorrow&apos;s Spaces</span>
             </h1>
-            <p className="animate-fade-in-up animate-delay-200 text-[#8A8478] text-base md:text-lg max-w-xl mb-10 font-light leading-relaxed">
+            <p className="animate-fade-in-up animate-delay-100 text-[#8A8478] text-base md:text-lg max-w-xl mb-10 font-light leading-relaxed">
               Where sustainable architecture meets luxury living. Over 15 years of
               crafting innovative, modern spaces that honour Fiji&apos;s natural beauty
               through thoughtful design and cutting-edge visualization.
             </p>
-            <div className="animate-fade-in-up animate-delay-300 flex flex-col sm:flex-row items-center gap-4">
+            <div className="animate-fade-in-up animate-delay-200 flex flex-col sm:flex-row items-center gap-4">
               <a href="#projects" className="btn-gold px-10 py-4 rounded-full text-sm tracking-[0.15em]">
                 View Our Work
               </a>
@@ -415,7 +402,7 @@ function AboutSection({ about, refreshKey }: { about: Partial<AboutContentT> | n
     <section id="about" className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-slow w-[350px] h-[350px] bg-[#C9A84C] top-[20%] right-[-8%] opacity-10" />
       <div className="max-w-7xl mx-auto px-6" ref={ref}>
-        <div className={`transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">Who We Are</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             Crafting <span className="gold-shimmer">Excellence</span> in
@@ -424,12 +411,12 @@ function AboutSection({ about, refreshKey }: { about: Partial<AboutContentT> | n
           <div className="section-divider w-24 mb-12" />
         </div>
         <div className="grid md:grid-cols-2 gap-12 items-start">
-          <div className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className={`transition-all duration-500 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph1}</p>
             <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph2}</p>
             <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{a?.paragraph3}</p>
           </div>
-          <div className={`transition-all duration-700 delay-300 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className={`transition-all duration-500 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8 space-y-8">
               <StatItem number={`${count1}+`} label={a?.statYearsLabel ?? ""} />
               <div className="section-divider" />
@@ -471,7 +458,7 @@ function ServicesSection({ services: initialServices, refreshKey }: { services: 
     <section id="services" className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-medium w-[400px] h-[400px] bg-[#D4AF37] bottom-[5%] left-[-10%] opacity-10" />
       <div className="max-w-7xl mx-auto px-6" ref={ref}>
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">What We Do</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             Our <span className="gold-shimmer">Services</span>
@@ -480,7 +467,7 @@ function ServicesSection({ services: initialServices, refreshKey }: { services: 
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {services.map((service, i) => (
-            <div key={service.id} className={`service-card liquid-glass rounded-2xl p-8 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: `${(i + 1) * 150}ms` }}>
+            <div key={service.id} className={`service-card liquid-glass rounded-2xl p-8 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`} style={{ transitionDelay: `${(i + 1) * 80}ms` }}>
               <div className="text-[#C9A84C] mb-6"><ServiceIcon iconKey={service.iconKey} /></div>
               <h3 className="font-display text-2xl font-light mb-4 text-[#F5F0E8]">{service.title}</h3>
               <p className="text-[#8A8478] leading-relaxed font-light text-sm">{service.description}</p>
@@ -499,7 +486,7 @@ function ProcessSection() {
     <section id="process" className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-fast w-[300px] h-[300px] bg-[#C9A84C] top-[30%] right-[10%] opacity-8" />
       <div className="max-w-7xl mx-auto px-6" ref={ref}>
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">How We Work</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             Our <span className="gold-shimmer">Process</span>
@@ -511,7 +498,7 @@ function ProcessSection() {
         </div>
         <div className="grid md:grid-cols-4 gap-6">
           {PROCESS_STEPS.map((step, i) => (
-            <div key={step.step} className={`process-step transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: `${(i + 1) * 200}ms` }}>
+            <div key={step.step} className={`process-step transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`} style={{ transitionDelay: `${(i + 1) * 100}ms` }}>
               <div className="liquid-glass rounded-2xl p-6 text-center h-full flex flex-col">
                 <div className="w-14 h-14 rounded-full border border-[rgba(201,168,76,0.3)] flex items-center justify-center mx-auto mb-5 bg-[rgba(201,168,76,0.06)]">
                   <span className="font-display text-xl gold-shimmer">{step.step}</span>
@@ -534,7 +521,7 @@ function WhyEluxSection() {
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-slow w-[400px] h-[400px] bg-[#D4AF37] bottom-[0%] left-[50%] opacity-8" />
       <div className="max-w-7xl mx-auto px-6" ref={ref}>
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">Why Choose Us</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             The Elux <span className="gold-shimmer">Advantage</span>
@@ -543,7 +530,7 @@ function WhyEluxSection() {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {VALUE_PROPS.map((prop, i) => (
-            <div key={prop.title} className={`value-card liquid-glass rounded-2xl p-6 text-center transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: `${(i + 1) * 120}ms` }}>
+            <div key={prop.title} className={`value-card liquid-glass rounded-2xl p-6 text-center transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`} style={{ transitionDelay: `${(i + 1) * 60}ms` }}>
               <div className="value-icon w-14 h-14 rounded-xl liquid-glass-subtle flex items-center justify-center mx-auto mb-5 text-[#C9A84C]">{prop.icon}</div>
               <h3 className="font-display text-lg font-light text-[#F5F0E8] mb-3">{prop.title}</h3>
               <p className="text-[#8A8478] leading-relaxed font-light text-xs">{prop.description}</p>
@@ -588,7 +575,7 @@ function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: 
       <section id="projects" className="relative py-24 md:py-32 overflow-hidden">
         <div className="orb orb-slow w-[450px] h-[450px] bg-[#C9A84C] top-[10%] right-[-12%] opacity-10" />
         <div className="max-w-7xl mx-auto px-6" ref={ref}>
-          <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">Portfolio</p>
             <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
               Featured <span className="gold-shimmer">Projects</span>
@@ -604,8 +591,8 @@ function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: 
             {projects.map((project, i) => (
               <div
                 key={project.id}
-                className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 min-w-[280px] snap-center flex-shrink-0 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-                style={{ transitionDelay: `${(i + 1) * 150}ms` }}
+                className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 min-w-[280px] snap-center flex-shrink-0 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                style={{ transitionDelay: `${(i + 1) * 80}ms` }}
                 onClick={() => setSelectedProject(selectedProject === i ? null : i)}
               >
                 <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={(src) => { const all = project.images?.length ? project.images : [project.image]; setLightboxImages(all); setLightboxIndex(all.indexOf(src) >= 0 ? all.indexOf(src) : 0); setLightboxImage(src); }} />
@@ -623,7 +610,7 @@ function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: 
                 {projects.map((project, i) => (
                   <div
                     key={project.id}
-                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-700 flex-shrink-0`}
+                    className={`project-card liquid-glass rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 flex-shrink-0`}
                     style={{ width: 'calc(33.333% - 1rem)' }}
                     onClick={() => setSelectedProject(selectedProject === i ? null : i)}
                   >
@@ -789,7 +776,7 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: 
     <section id="testimonials" className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-medium w-[380px] h-[380px] bg-[#C9A84C] top-[15%] left-[-8%] opacity-8" />
       <div className="max-w-5xl mx-auto px-6" ref={ref}>
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">Client Voices</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             What They <span className="gold-shimmer">Say</span>
@@ -797,7 +784,7 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: 
           <div className="section-divider w-24 mx-auto" />
         </div>
 
-        <div className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`transition-all duration-500 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <div className="liquid-glass-strong rounded-2xl p-8 md:p-12 relative overflow-hidden">
             <div className="quote-mark">&ldquo;</div>
             <div className="overflow-hidden">
@@ -897,7 +884,7 @@ function ContactSection({ settings: initialSettings, serviceTitles }: { settings
     <section id="contact" className="relative py-24 md:py-32 overflow-hidden">
       <div className="orb orb-fast w-[350px] h-[350px] bg-[#A07C1C] top-[20%] left-[-5%] opacity-10" />
       <div className="max-w-7xl mx-auto px-6" ref={ref}>
-        <div className={`text-center mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-16 transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
           <p className="text-[#C9A84C] tracking-[0.3em] uppercase text-xs mb-4">Reach Out</p>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-6">
             Let&apos;s <span className="gold-shimmer">Connect</span>
@@ -906,7 +893,7 @@ function ContactSection({ settings: initialSettings, serviceTitles }: { settings
           <div className="section-divider w-24 mx-auto mt-6" />
         </div>
         <div className="grid md:grid-cols-5 gap-8 max-w-6xl mx-auto">
-          <div className={`md:col-span-2 transition-all duration-700 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className={`md:col-span-2 transition-all duration-500 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8 h-full">
               <h3 className="font-display text-2xl font-light mb-8 text-[#F5F0E8]">Contact Details</h3>
               <div className="space-y-6">
@@ -929,7 +916,7 @@ function ContactSection({ settings: initialSettings, serviceTitles }: { settings
               </div>
             </div>
           </div>
-          <div className={`md:col-span-3 transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className={`md:col-span-3 transition-all duration-500 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8">
               <h3 className="font-display text-2xl font-light mb-8 text-[#F5F0E8]">Send an Inquiry</h3>
               {submitted ? (
@@ -2312,7 +2299,6 @@ export default function HomePage() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState<SiteData | null>(null);
-  const [ready, setReady] = useState(false);
 
   // Single batched fetch — replaces 6+ separate API calls
   useEffect(() => {
@@ -2328,8 +2314,7 @@ export default function HomePage() {
           setData(json);
         }
       })
-      .catch((err) => console.error("[HomePage] content fetch failed:", err))
-      .finally(() => { if (!cancelled) setReady(true); });
+      .catch((err) => console.error("[HomePage] content fetch failed:", err));
     return () => { cancelled = true; };
   }, [refreshKey]);
 
@@ -2366,7 +2351,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
-      <PageLoader ready={ready} />
       <ScrollProgress />
       <Navbar />
       <main className="flex-1">
