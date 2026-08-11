@@ -18,8 +18,15 @@ export async function GET(req: NextRequest) {
     });
     // Auto-seed if this site has no testimonials at all
     if (testimonials.length === 0) {
-      console.log('[/api/testimonials] No testimonials found, triggering seed...');
-      await seedIfEmpty();
+      // Check if testimonials exist but are all inactive — reactivate them
+      const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
+      if (totalCount > 0) {
+        console.log(`[/api/testimonials] Found ${totalCount} inactive testimonial(s), reactivating...`);
+        await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
+      } else {
+        console.log('[/api/testimonials] No testimonials found, triggering seed...');
+        await seedIfEmpty();
+      }
       testimonials = await db.testimonial.findMany({
         where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
