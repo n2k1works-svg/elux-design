@@ -97,48 +97,6 @@ function ServiceIcon({ iconKey, className = "w-8 h-8" }: { iconKey: string; clas
   return <>{icons[iconKey] || icons.building}</>;
 }
 
-const FALLBACK_SERVICES: ServiceT[] = [
-  {
-    id: "fb-s-1",
-    title: "Building Design",
-    description: "We craft custom residential homes, waterfront properties, and high-end property refurbishments that blend luxury living with environmental responsibility. Each design is a unique response to its site, climate, and the vision of its owner, ensuring spaces that feel both timeless and unmistakably modern.",
-    iconKey: "building",
-    order: 0,
-    active: true,
-  },
-  {
-    id: "fb-s-2",
-    title: "3D Visualization",
-    description: "Our cutting-edge 3D rendering and visual walkthroughs transform architectural concepts into photorealistic experiences. Clients can explore every corner of their future home before a single foundation is poured, making design decisions with confidence and clarity that traditional blueprints simply cannot provide.",
-    iconKey: "3d",
-    order: 1,
-    active: true,
-  },
-  {
-    id: "fb-s-3",
-    title: "Project Oversight",
-    description: "From initial concept through to final handover, we manage and document every phase of your project. Our comprehensive oversight ensures quality control, timeline adherence, and seamless communication between all stakeholders, delivering results that match the original design vision with precision.",
-    iconKey: "oversight",
-    order: 2,
-    active: true,
-  },
-];
-
-const FALLBACK_ABOUT: AboutContentT = {
-  id: "fb-about",
-  paragraph1: "Elux Design is a premier building design and 3D visualization firm based in Nadi, Fiji. For over 15 years, we have been at the forefront of architectural innovation in the South Pacific, delivering projects that range from luxury waterfront residences to large-scale commercial developments across the region.",
-  paragraph2: "Our philosophy is rooted in the belief that great architecture should work in harmony with its environment. Fiji's tropical climate, stunning landscapes, and rich cultural heritage serve as both our inspiration and our guide. Every project we undertake is a unique response to its site, its climate, and the vision of its owner.",
-  paragraph3: "From the concept sketches to the final walkthrough, our integrated approach ensures that design intent is preserved at every stage, resulting in spaces that are not only beautiful but enduringly functional and deeply connected to their Pacific island context.",
-  statYears: 15,
-  statProjects: 50,
-  statSpecializations: 3,
-  statSatisfaction: 100,
-  statYearsLabel: "Years of Experience",
-  statProjectsLabel: "Projects Completed",
-  statSpecLabel: "Core Specializations",
-  statSatLabel: "Client Satisfaction",
-};
-
 const PROCESS_STEPS = [
   {
     step: "01",
@@ -206,78 +164,12 @@ const VALUE_PROPS = [
   },
 ];
 
-const FALLBACK_TESTIMONIALS: TestimonialT[] = [
-  {
-    id: "fb-t-1",
-    quote: "Elux Design transformed our vision of a waterfront dream home into a reality that exceeded every expectation. The 3D walkthrough alone saved us from costly design changes before construction even began. Their understanding of Fiji's climate and materials is unmatched in the region.",
-    name: "James & Sarah Mitchell",
-    role: "Homeowners, Fantasy Island Villa",
-    active: true,
-    order: 0,
-  },
-  {
-    id: "fb-t-2",
-    quote: "Working with Elux Design was a seamless experience from concept to completion. Their project oversight meant we never had to worry about coordination between contractors and designers. The final result is a home that feels both luxurious and deeply connected to its surroundings.",
-    name: "Rajesh Kumar",
-    role: "Property Developer, Lautoka",
-    active: true,
-    order: 1,
-  },
-  {
-    id: "fb-t-3",
-    quote: "The refurbishment of our Coral Coast property was handled with remarkable sensitivity to its original character while bringing it firmly into the 21st century. The sustainable design elements have reduced our energy costs significantly. We could not be happier with the outcome.",
-    name: "Dr. Emily Chen",
-    role: "Homeowner, Coral Coast Estate",
-    active: true,
-    order: 2,
-  },
-];
-
-const FALLBACK_PROJECTS: ProjectT[] = [
-  {
-    id: "fb-p-1",
-    title: "Fantasy Island Villa",
-    location: "Fantasy Island, Fiji",
-    category: "Luxury Waterfront Residence",
-    description:
-      "A breathtaking waterfront villa that seamlessly merges indoor and outdoor living. Featuring panoramic ocean views, sustainable timber construction, and an infinity pool that dissolves into the horizon. This project exemplifies Elux Design's commitment to luxury that respects its natural surroundings.",
-    image: "/project-1.png",
-    images: [],
-    order: 0,
-    active: true,
-  },
-  {
-    id: "fb-p-2",
-    title: "Lautoka Modern Retreat",
-    location: "Lautoka, Fiji",
-    category: "Modern Residential",
-    description:
-      "A contemporary family residence in Lautoka that redefines tropical modernism. Clean geometric lines, expansive glass facades, and natural ventilation systems create a home that is both architecturally striking and deeply comfortable in Fiji's warm climate.",
-    image: "/project-2.png",
-    images: [],
-    order: 1,
-    active: true,
-  },
-  {
-    id: "fb-p-3",
-    title: "Coral Coast Estate",
-    location: "Coral Coast, Fiji",
-    category: "High-End Property Refurbishment",
-    description:
-      "A complete transformation of an existing coastal property into a world-class estate. The refurbishment preserved the structure's heritage character while introducing modern amenities, energy-efficient systems, and a redesigned landscape that frames stunning lagoon views.",
-    image: "/project-3.png",
-    images: [],
-    order: 2,
-    active: true,
-  },
-];
-
-const FALLBACK_SETTINGS: SettingsT = {
-  phone: "+679 000 0000",
-  email: "hello@eluxdesign.com",
-  location: "Nadi, Fiji",
-  facebook: "https://facebook.com/EluxDesign",
-  instagram: "https://instagram.com/EluxDesign",
+const EMPTY_SETTINGS: SettingsT = {
+  phone: "",
+  email: "",
+  location: "",
+  facebook: "",
+  instagram: "",
   linkedin: "",
 };
 
@@ -1027,7 +919,8 @@ function TestimonialsSection({ refreshKey }: { refreshKey: number }) {
 function ContactSection() {
   const { ref, inView } = useInView();
   const [submitted, setSubmitted] = useState(false);
-  const [settings, setSettings] = useState<SettingsT>(FALLBACK_SETTINGS);
+  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
+  const [serviceTitles, setServiceTitles] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1038,7 +931,7 @@ function ContactSection() {
       })
       .then((data: Partial<SettingsT>) => {
         if (cancelled) return;
-        if (data && typeof data === "object" && !('error' in data)) {
+        if (data && typeof data === "object" && !("error" in data)) {
           setSettings((prev) => ({
             phone: data.phone ?? prev.phone,
             email: data.email ?? prev.email,
@@ -1050,6 +943,23 @@ function ContactSection() {
         }
       })
       .catch((err) => { console.error("Settings fetch error:", err); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/services?_t=" + Date.now())
+      .then((r) => {
+        if (!r.ok) throw new Error("Services fetch failed");
+        return r.json();
+      })
+      .then((data: ServiceT[]) => {
+        if (cancelled) return;
+        if (Array.isArray(data)) {
+          setServiceTitles(data.filter((s) => s.active).map((s) => s.title));
+        }
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -1136,7 +1046,7 @@ function ContactSection() {
                     <div><label htmlFor="name" className="block text-xs tracking-[0.15em] uppercase text-[#8A8478] mb-2">Full Name</label><input id="name" name="name" type="text" required placeholder="Your name" className="form-input-glass w-full px-4 py-3 rounded-xl text-sm" /></div>
                     <div><label htmlFor="email" className="block text-xs tracking-[0.15em] uppercase text-[#8A8478] mb-2">Email Address</label><input id="email" name="email" type="email" required placeholder="your@email.com" className="form-input-glass w-full px-4 py-3 rounded-xl text-sm" /></div>
                   </div>
-                  <div><label htmlFor="subject" className="block text-xs tracking-[0.15em] uppercase text-[#8A8478] mb-2">Subject</label><select id="subject" name="subject" className="form-input-glass w-full px-4 py-3 rounded-xl text-sm appearance-none" defaultValue=""><option value="" disabled>Select a service</option><option value="building-design">Building Design</option><option value="3d-visualization">3D Visualization</option><option value="project-oversight">Project Oversight</option><option value="other">Other Inquiry</option></select></div>
+                  <div><label htmlFor="subject" className="block text-xs tracking-[0.15em] uppercase text-[#8A8478] mb-2">Subject</label><select id="subject" name="subject" className="form-input-glass w-full px-4 py-3 rounded-xl text-sm appearance-none" defaultValue=""><option value="" disabled>Select a service</option>{serviceTitles.map((t) => <option key={t} value={t}>{t}</option>)}<option value="other">Other Inquiry</option></select></div>
                   <div><label htmlFor="message" className="block text-xs tracking-[0.15em] uppercase text-[#8A8478] mb-2">Message</label><textarea id="message" name="message" rows={5} required placeholder="Tell us about your project..." className="form-input-glass w-full px-4 py-3 rounded-xl text-sm resize-none" /></div>
                   <button type="submit" disabled={sending} className="btn-gold w-full py-4 rounded-xl text-sm tracking-[0.15em] disabled:opacity-60">{sending ? "Sending..." : "Send Inquiry"}</button>
                   {formError && <p className="text-red-400 text-xs text-center mt-3">{formError}</p>}
@@ -1183,7 +1093,7 @@ function BackToTop() {
 
 /* ---------- Footer ---------- */
 function Footer({ refreshKey }: { refreshKey: number }) {
-  const [settings, setSettings] = useState<SettingsT>(FALLBACK_SETTINGS);
+  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
 
   useEffect(() => {
     fetch("/api/settings?_t=" + Date.now())
@@ -2070,7 +1980,7 @@ function TestimonialFormModal({ testimonial, onClose, onSaved, onError }: {
 /* ---------- Admin Settings Tab ---------- */
 function AdminSettingsTab() {
   const { toast, showToast } = useAdminToast();
-  const [settings, setSettings] = useState<SettingsT>(FALLBACK_SETTINGS);
+  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
