@@ -1219,6 +1219,11 @@ function Footer({ refreshKey }: { refreshKey: number }) {
               <a key={link.href} href={link.href} className="text-xs tracking-[0.1em] uppercase text-[#8A8478] hover:text-[#C9A84C] transition-colors duration-300">{link.label}</a>
             ))}
           </div>
+          <div className="flex items-center gap-4">
+            <a href="/terms" className="text-xs tracking-[0.1em] uppercase text-[#8A8478]/60 hover:text-[#C9A84C] transition-colors duration-300">Terms of Service</a>
+            <span className="text-[#8A8478]/30">|</span>
+            <a href="/privacy" className="text-xs tracking-[0.1em] uppercase text-[#8A8478]/60 hover:text-[#C9A84C] transition-colors duration-300">Privacy Policy</a>
+          </div>
         </div>
         <div className="section-divider mt-8 mb-6" />
         <div className="flex flex-col items-center gap-4">
