@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureMigrated } from "@/lib/db";
+import { db, ensureTablesExist } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 import { seedIfEmpty } from "@/app/api/seed/route";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureMigrated();
+    await ensureTablesExist();
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
     const showAll = all && (await isAuthenticated());

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureMigrated } from "@/lib/db";
+import { db, ensureTablesExist } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -24,7 +24,7 @@ function sanitizeBody(body: Record<string, unknown>) {
 
 export async function GET() {
   try {
-    await ensureMigrated();
+    await ensureTablesExist();
     let about = await db.aboutContent.findUnique({ where: { id: SITE_ID } });
     if (!about) {
       about = await db.aboutContent.create({ data: { id: SITE_ID } });
@@ -38,7 +38,7 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    await ensureMigrated();
+    await ensureTablesExist();
     const authed = await isAuthenticated();
     if (!authed) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     const body = await req.json();
