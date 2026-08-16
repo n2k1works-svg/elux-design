@@ -173,9 +173,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="/api/content" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var c=window.__eluxCache||null;var k='elux-site-data';var raw=sessionStorage.getItem(k);if(raw){var p=JSON.parse(raw);if(Date.now()-p.ts<30000){c=p.d}}window.__eluxCache=c;fetch('/api/content?_t='+Date.now()).then(function(r){return r.json()}).then(function(d){if(d&&typeof d==='object'&&!('error' in d)){sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),d:d}));window.__eluxCache=d}}).catch(function(){})}catch(e){}})()`,
+          }}
         />
       </head>
       <body className="antialiased bg-[#0A0A0A] text-[#F5F0E8]">

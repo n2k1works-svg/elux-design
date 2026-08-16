@@ -182,6 +182,137 @@ const EMPTY_SETTINGS: SettingsT = {
 };
 
 /* ========================================================================
+   SKELETON COMPONENTS
+   ======================================================================== */
+
+function SkeletonPulse({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse bg-[#8A8478]/10 rounded ${className}`} />;
+}
+
+function AboutSkeleton() {
+  return (
+    <section id="about" className="relative py-24 md:py-32 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <SkeletonPulse className="h-3 w-24 mb-4" />
+        <SkeletonPulse className="h-10 w-96 mb-6" />
+        <SkeletonPulse className="h-px w-24 mb-12" />
+        <div className="grid md:grid-cols-2 gap-12 items-start">
+          <div className="space-y-6">
+            <SkeletonPulse className="h-4 w-full" />
+            <SkeletonPulse className="h-4 w-full" />
+            <SkeletonPulse className="h-4 w-3/4" />
+          </div>
+          <div className="rounded-2xl p-8 space-y-8 bg-[rgba(201,168,76,0.04)]">
+            {[1,2,3,4].map(i => <div key={i} className="flex items-center gap-6"><SkeletonPulse className="h-10 w-16" /><SkeletonPulse className="h-3 w-32" /></div>)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ServicesSkeleton() {
+  return (
+    <section id="services" className="relative py-24 md:py-32 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <SkeletonPulse className="h-3 w-24 mx-auto mb-4" />
+          <SkeletonPulse className="h-10 w-64 mx-auto mb-6" />
+          <SkeletonPulse className="h-px w-24 mx-auto" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="rounded-2xl p-8 bg-[rgba(201,168,76,0.04)]">
+              <SkeletonPulse className="h-8 w-8 mb-6" />
+              <SkeletonPulse className="h-6 w-32 mb-4" />
+              <SkeletonPulse className="h-3 w-full" />
+              <SkeletonPulse className="h-3 w-3/4 mt-2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectsSkeleton() {
+  return (
+    <section id="projects" className="relative py-24 md:py-32 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <SkeletonPulse className="h-3 w-24 mx-auto mb-4" />
+          <SkeletonPulse className="h-10 w-80 mx-auto mb-6" />
+          <SkeletonPulse className="h-px w-24 mx-auto" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="rounded-2xl overflow-hidden bg-[rgba(201,168,76,0.04)]">
+              <SkeletonPulse className="h-56 w-full" />
+              <div className="p-6">
+                <SkeletonPulse className="h-5 w-32 mb-2" />
+                <SkeletonPulse className="h-3 w-20 mb-3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialsSkeleton() {
+  return (
+    <section id="testimonials" className="relative py-24 md:py-32 overflow-hidden">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <SkeletonPulse className="h-3 w-24 mx-auto mb-4" />
+          <SkeletonPulse className="h-10 w-64 mx-auto mb-6" />
+          <SkeletonPulse className="h-px w-24 mx-auto" />
+        </div>
+        <div className="rounded-2xl p-8 md:p-12 bg-[rgba(201,168,76,0.04)]">
+          <SkeletonPulse className="h-6 w-4/5 mb-4 mx-auto" />
+          <SkeletonPulse className="h-6 w-3/5 mb-8 mx-auto" />
+          <div className="flex items-center gap-4">
+            <SkeletonPulse className="h-12 w-12 rounded-full" />
+            <div><SkeletonPulse className="h-4 w-24 mb-1" /><SkeletonPulse className="h-3 w-32" /></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ContactSkeleton() {
+  return (
+    <section id="contact" className="relative py-24 md:py-32 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <SkeletonPulse className="h-3 w-24 mx-auto mb-4" />
+          <SkeletonPulse className="h-10 w-56 mx-auto mb-6" />
+        </div>
+        <div className="grid md:grid-cols-5 gap-8 max-w-6xl mx-auto">
+          <div className="md:col-span-2 rounded-2xl p-8 bg-[rgba(201,168,76,0.04)]">
+            <SkeletonPulse className="h-7 w-32 mb-8" />
+            <div className="space-y-6">
+              {[1,2,3].map(i => <div key={i} className="flex items-start gap-4"><SkeletonPulse className="h-5 w-5 mt-1" /><div><SkeletonPulse className="h-3 w-12 mb-1" /><SkeletonPulse className="h-4 w-36" /></div></div>)}
+            </div>
+          </div>
+          <div className="md:col-span-3 rounded-2xl p-8 bg-[rgba(201,168,76,0.04)]">
+            <SkeletonPulse className="h-7 w-36 mb-8" />
+            <div className="space-y-5">
+              <div className="grid sm:grid-cols-2 gap-5"><SkeletonPulse className="h-11 w-full" /><SkeletonPulse className="h-11 w-full" /></div>
+              <SkeletonPulse className="h-11 w-full" />
+              <SkeletonPulse className="h-28 w-full" />
+              <SkeletonPulse className="h-11 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ========================================================================
    HOOKS
    ======================================================================== */
 
@@ -380,7 +511,7 @@ function HeroSection() {
 }
 
 /* ---------- About ---------- */
-function AboutSection({ about, refreshKey }: { about: Partial<AboutContentT> | null; refreshKey: number }) {
+function AboutSection({ about, refreshKey, loading }: { about: Partial<AboutContentT> | null; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView();
   const count1 = useCountUp(about?.statYears ?? 0, 1800, inView);
   const count2 = useCountUp(about?.statProjects ?? 0, 2000, inView);
@@ -397,6 +528,8 @@ function AboutSection({ about, refreshKey }: { about: Partial<AboutContentT> | n
       .catch(() => {});
   }, [refreshKey]);
   const a = refreshKey === 0 ? about : localAbout;
+
+  if (loading) return <AboutSkeleton />;
 
   return (
     <section id="about" className="relative py-24 md:py-32 overflow-hidden">
@@ -443,7 +576,7 @@ function StatItem({ number, label }: { number: string; label: string }) {
 }
 
 /* ---------- Services ---------- */
-function ServicesSection({ services: initialServices, refreshKey }: { services: ServiceT[]; refreshKey: number }) {
+function ServicesSection({ services: initialServices, refreshKey, loading }: { services: ServiceT[]; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView();
   const [services, setServices] = useState(initialServices);
   useEffect(() => {
@@ -453,6 +586,8 @@ function ServicesSection({ services: initialServices, refreshKey }: { services: 
       .then((data: SiteData) => { if (data.services?.length) setServices(data.services); })
       .catch(() => {});
   }, [refreshKey]);
+
+  if (loading) return <ServicesSkeleton />;
 
   return (
     <section id="services" className="relative py-24 md:py-32 overflow-hidden">
@@ -543,7 +678,7 @@ function WhyEluxSection() {
 }
 
 /* ---------- Projects ---------- */
-function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: ProjectT[]; refreshKey: number }) {
+function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { projects: ProjectT[]; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView(0.05);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -560,6 +695,8 @@ function ProjectsSection({ projects: initialProjects, refreshKey }: { projects: 
       .then((data: SiteData) => { if (data.projects?.length) setProjects(data.projects); })
       .catch(() => {});
   }, [refreshKey]);
+
+  if (loading) return <ProjectsSkeleton />;
 
   const totalPages = Math.max(1, Math.ceil(projects.length / PER_PAGE_DESKTOP));
   const goToPage = (p: number) => {
@@ -746,7 +883,7 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
 }
 
 /* ---------- Testimonials ---------- */
-function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: { testimonials: TestimonialT[]; refreshKey: number }) {
+function TestimonialsSection({ testimonials: initialTestimonials, refreshKey, loading }: { testimonials: TestimonialT[]; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView(0.15);
   const [active, setActive] = useState(0);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
@@ -757,6 +894,8 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: 
       .then((data: SiteData) => { if (data.testimonials?.length) setTestimonials(data.testimonials); })
       .catch(() => {});
   }, [refreshKey]);
+
+  if (loading) return <TestimonialsSkeleton />;
 
   const goTo = (i: number) => {
     setActive(i);
@@ -845,13 +984,15 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey }: 
 }
 
 /* ---------- Contact ---------- */
-function ContactSection({ settings: initialSettings, serviceTitles }: { settings: SettingsT; serviceTitles: string[] }) {
+function ContactSection({ settings: initialSettings, serviceTitles, loading }: { settings: SettingsT; serviceTitles: string[]; loading: boolean }) {
   const { ref, inView } = useInView();
   const [submitted, setSubmitted] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
 
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
+
+  if (loading) return <ContactSkeleton />;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -2299,10 +2440,46 @@ export default function HomePage() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState<SiteData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Single batched fetch — replaces 6+ separate API calls
+  // Single batched fetch with sessionStorage cache for instant repeat loads
   useEffect(() => {
     let cancelled = false;
+    const CACHE_KEY = "elux-site-data";
+    const CACHE_TTL = 30_000; // 30 seconds
+
+    // Check if layout.tsx head script already fetched data
+    const preFetched = (window as unknown as { __eluxCache?: SiteData }).__eluxCache;
+    if (preFetched) {
+      setData(preFetched);
+      setLoading(false);
+      // Still fetch fresh in background
+      fetch("/api/content?_t=" + Date.now())
+        .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+        .then((json: SiteData) => {
+          if (cancelled) return;
+          if (json && typeof json === "object" && !("error" in json)) {
+            setData(json);
+            try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), d: json })); } catch { /* ignore */ }
+          }
+        })
+        .catch(() => {});
+      return () => { cancelled = true; };
+    }
+
+    // Try sessionStorage cache next
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { ts, d } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          setData(d);
+          setLoading(false);
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Always fetch fresh (replaces stale cache or initial empty)
     fetch("/api/content?_t=" + Date.now())
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -2312,9 +2489,14 @@ export default function HomePage() {
         if (cancelled) return;
         if (json && typeof json === "object" && !("error" in json)) {
           setData(json);
+          setLoading(false);
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), d: json })); } catch { /* ignore */ }
         }
       })
-      .catch((err) => console.error("[HomePage] content fetch failed:", err));
+      .catch((err) => {
+        console.error("[HomePage] content fetch failed:", err);
+        setLoading(false);
+      });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
@@ -2322,6 +2504,9 @@ export default function HomePage() {
   const closeAdmin = useCallback(() => {
     setAdminOpen(false);
     setRefreshKey((k) => k + 1);
+    // Clear cache so edits are visible immediately
+    try { sessionStorage.removeItem('elux-site-data'); } catch { /* ignore */ }
+    (window as unknown as { __eluxCache?: SiteData }).__eluxCache = undefined;
   }, []);
 
   // Keyboard shortcut: Ctrl + Shift + A toggles the admin panel
@@ -2356,19 +2541,19 @@ export default function HomePage() {
       <main className="flex-1">
         <HeroSection />
         <div className="section-divider" />
-        <AboutSection about={data?.about ?? null} refreshKey={refreshKey} />
+        <AboutSection about={data?.about ?? null} refreshKey={refreshKey} loading={loading} />
         <div className="section-divider" />
-        <ServicesSection services={data?.services ?? []} refreshKey={refreshKey} />
+        <ServicesSection services={data?.services ?? []} refreshKey={refreshKey} loading={loading} />
         <div className="section-divider" />
         <ProcessSection />
         <div className="section-divider" />
         <WhyEluxSection />
         <div className="section-divider" />
-        <ProjectsSection projects={data?.projects ?? []} refreshKey={refreshKey} />
+        <ProjectsSection projects={data?.projects ?? []} refreshKey={refreshKey} loading={loading} />
         <div className="section-divider" />
-        <TestimonialsSection testimonials={data?.testimonials ?? []} refreshKey={refreshKey} />
+        <TestimonialsSection testimonials={data?.testimonials ?? []} refreshKey={refreshKey} loading={loading} />
         <div className="section-divider" />
-        <ContactSection settings={settings} serviceTitles={serviceTitles} />
+        <ContactSection settings={settings} serviceTitles={serviceTitles} loading={loading} />
       </main>
       <Footer settings={settings} />
       <BackToTop />

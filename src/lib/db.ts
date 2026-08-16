@@ -129,14 +129,15 @@ const MIGRATE_TTL_MS = 60_000; // 60 seconds
  * Fast path for read-only endpoints (content, legal, sitemap).
  * Only runs CREATE TABLE IF NOT EXISTS for all 6 tables —
  * no ALTER COLUMN scans, no information_schema queries.
- * This reduces cold-start queries from ~36 to 6.
+ * This reduces cold-start queries from ~36 to 1.
  */
 export async function ensureTablesExist() {
   const now = Date.now();
   if (now - _migratedAt < MIGRATE_TTL_MS) return;
-  for (const createSql of Object.values(CREATE_TABLES)) {
-    await db.$executeRawUnsafe(createSql);
-  }
+  // Batch all 6 CREATE TABLE IF NOT EXISTS into a single raw call
+  // These are all idempotent and safe to run together
+  const batch = Object.values(CREATE_TABLES).join(';\n');
+  await db.$executeRawUnsafe(batch);
   _migratedAt = Date.now();
 }
 
