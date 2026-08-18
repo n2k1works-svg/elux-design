@@ -36,7 +36,13 @@ export async function GET(req: NextRequest) {
       });
     }
     console.log(`[/api/projects] Returning ${projects.length} project(s)`);
-    return NextResponse.json(projects.map(p => ({ ...p, images: parseImages(p) })));
+    // Strip heavy base64 images for list view — full images load on-demand
+    const light = projects.map((p) => {
+      const img = p.image || "";
+      const cover = img.startsWith("data:") && img.length > 20_000 ? "/project-1.png" : img;
+      return { ...p, image: cover };
+    });
+    return NextResponse.json(light.map(p => ({ ...p, images: parseImages(p) })));
   } catch (err) {
     console.error('[/api/projects] GET failed:', err);
     return NextResponse.json({ error: 'Failed to load projects' }, { status: 500 });

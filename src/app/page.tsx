@@ -69,6 +69,14 @@ type SiteData = {
   settings: Partial<SettingsT> | null;
 };
 
+type AdminData = {
+  projects: ProjectT[];
+  services: (ServiceT & { id: string })[];
+  testimonials: TestimonialT[];
+  settings: Partial<SettingsT> | null;
+  about: Partial<AboutContentT> | null;
+};
+
 /* ========================================================================
    DATA
    ======================================================================== */
@@ -1303,6 +1311,38 @@ type AdminTab = "projects" | "testimonials" | "services" | "about" | "settings" 
 function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: () => void }) {
   const [tab, setTab] = useState<AdminTab>("projects");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [initialData, setInitialData] = useState<AdminData | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [bumpKey, setBumpKey] = useState(0);
+
+  // Single batch fetch — replaces 5 separate API calls that each
+  // triggered their own serverless cold start + DB connection.
+  useEffect(() => {
+    let cancelled = false;
+    setFetchError(null);
+    fetch("/api/admin/content?_t=" + Date.now())
+      .then((r) => {
+        if (r.status === 401) throw new Error("Session expired. Please log in again.");
+        if (!r.ok) throw new Error(`Server error (${r.status})`);
+        return r.json();
+      })
+      .then((data: AdminData) => {
+        if (cancelled) return;
+        if (data && typeof data === "object" && !("error" in data)) {
+          setInitialData(data);
+        } else {
+          setFetchError((data as Record<string, unknown>)?.error as string || "Invalid response");
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[AdminDashboard] batch fetch failed:", err);
+        setFetchError(err.message || "Network error");
+      });
+    return () => { cancelled = true; };
+  }, [bumpKey]);
+
+  const refreshData = useCallback(() => setBumpKey((k) => k + 1), []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -1398,13 +1438,29 @@ function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: 
 
       {/* Content */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
-        {tab === "projects" && <AdminProjectsTab />}
-        {tab === "testimonials" && <AdminTestimonialsTab />}
-        {tab === "services" && <AdminServicesTab />}
-        {tab === "about" && <AdminAboutTab />}
-        {tab === "settings" && <AdminSettingsTab />}
-        {tab === "password" && <AdminPasswordTab />}
-        {tab === "legal" && <AdminLegalTab />}
+        {fetchError && !initialData ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <p className="text-[#8A8478] text-sm">{fetchError}</p>
+            <button onClick={() => setBumpKey((k) => k + 1)} className="text-xs text-[#C9A84C] hover:underline">Retry</button>
+          </div>
+        ) : !initialData ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-3 text-[#8A8478]">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+              <span className="text-xs tracking-[0.15em] uppercase">Loading dashboard...</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {tab === "projects" && <AdminProjectsTab initialData={initialData.projects} onDataChange={refreshData} />}
+            {tab === "testimonials" && <AdminTestimonialsTab initialData={initialData.testimonials} onDataChange={refreshData} />}
+            {tab === "services" && <AdminServicesTab initialData={initialData.services} onDataChange={refreshData} />}
+            {tab === "about" && <AdminAboutTab initialData={initialData.about} onDataChange={refreshData} />}
+            {tab === "settings" && <AdminSettingsTab initialData={initialData.settings} onDataChange={refreshData} />}
+            {tab === "password" && <AdminPasswordTab />}
+            {tab === "legal" && <AdminLegalTab />}
+          </>
+        )}
       </div>
     </div>
   );
@@ -1462,10 +1518,10 @@ function useAdminToast() {
 }
 
 /* ---------- Admin Projects Tab ---------- */
-function AdminProjectsTab() {
+function AdminProjectsTab({ initialData, onDataChange }: { initialData?: ProjectT[]; onDataChange?: () => void }) {
   const { toast, showToast } = useAdminToast();
-  const [projects, setProjects] = useState<ProjectT[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<ProjectT[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [editing, setEditing] = useState<ProjectT | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -1489,7 +1545,8 @@ function AdminProjectsTab() {
     }
   }, [showToast]);
 
-  useEffect(() => { load(); }, [load]);
+  // Skip initial fetch when we already have data from the batch endpoint
+  useEffect(() => { if (!initialData) load(); }, [initialData, load]);
 
   const handleDelete = async (p: ProjectT) => {
     if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
@@ -1772,10 +1829,10 @@ function ProjectFormModal({ project, onClose, onSaved, onError }: {
 
 
 /* ---------- Admin Testimonials Tab ---------- */
-function AdminTestimonialsTab() {
+function AdminTestimonialsTab({ initialData, onDataChange }: { initialData?: TestimonialT[]; onDataChange?: () => void }) {
   const { toast, showToast } = useAdminToast();
-  const [testimonials, setTestimonials] = useState<TestimonialT[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState<TestimonialT[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [editing, setEditing] = useState<TestimonialT | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -1799,7 +1856,8 @@ function AdminTestimonialsTab() {
     }
   }, [showToast]);
 
-  useEffect(() => { load(); }, [load]);
+  // Skip initial fetch when we already have data from the batch endpoint
+  useEffect(() => { if (!initialData) load(); }, [initialData, load]);
 
   const handleDelete = async (t: TestimonialT) => {
     if (!confirm(`Delete testimonial from "${t.name}"?`)) return;
@@ -1984,13 +2042,24 @@ function TestimonialFormModal({ testimonial, onClose, onSaved, onError }: {
 }
 
 /* ---------- Admin Settings Tab ---------- */
-function AdminSettingsTab() {
+function AdminSettingsTab({ initialData, onDataChange }: { initialData?: Partial<SettingsT> | null; onDataChange?: () => void }) {
   const { toast, showToast } = useAdminToast();
-  const [settings, setSettings] = useState<SettingsT>(EMPTY_SETTINGS);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<SettingsT>(
+    initialData ? {
+      phone: String((initialData as Record<string, unknown>).phone ?? ""),
+      email: String((initialData as Record<string, unknown>).email ?? ""),
+      location: String((initialData as Record<string, unknown>).location ?? ""),
+      facebook: String((initialData as Record<string, unknown>).facebook ?? ""),
+      instagram: String((initialData as Record<string, unknown>).instagram ?? ""),
+      linkedin: String((initialData as Record<string, unknown>).linkedin ?? ""),
+    } : EMPTY_SETTINGS
+  );
+  const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
 
+  // Skip initial fetch when we already have data from the batch endpoint
   useEffect(() => {
+    if (initialData) return;
     fetch("/api/settings?_t=" + Date.now())
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -2156,10 +2225,10 @@ function AdminPasswordTab() {
 /* ========================================================================
    ADMIN SERVICES TAB
    ======================================================================== */
-function AdminServicesTab() {
+function AdminServicesTab({ initialData, onDataChange }: { initialData?: (ServiceT & { id: string })[]; onDataChange?: () => void }) {
   const { toast, showToast } = useAdminToast();
-  const [items, setItems] = useState<{ id: string; title: string; description: string; iconKey: string; order: number; active: boolean }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<(ServiceT & { id: string })[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [editing, setEditing] = useState<typeof items[number] | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -2184,7 +2253,8 @@ function AdminServicesTab() {
     }
   }, [showToast]);
 
-  useEffect(() => { load(); }, [load]);
+  // Skip initial fetch when we already have data from the batch endpoint
+  useEffect(() => { if (!initialData) load(); }, [initialData, load]);
 
   const handleSave = async (item: typeof items[number]) => {
     setSaving(true);
@@ -2336,18 +2406,27 @@ function ServiceForm({ initial, saving, onSave, onCancel }: { initial?: any; sav
 /* ========================================================================
    ADMIN ABOUT TAB
    ======================================================================== */
-function AdminAboutTab() {
+function AdminAboutTab({ initialData, onDataChange }: { initialData?: Partial<AboutContentT> | null; onDataChange?: () => void }) {
   const { toast, showToast } = useAdminToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    paragraph1: "", paragraph2: "", paragraph3: "",
-    statYears: 15, statProjects: 50, statSpecializations: 3, statSatisfaction: 100,
-    statYearsLabel: "Years of Experience", statProjectsLabel: "Projects Completed",
-    statSpecLabel: "Core Specializations", statSatLabel: "Client Satisfaction %",
+    paragraph1: String(initialData?.paragraph1 || ""),
+    paragraph2: String(initialData?.paragraph2 || ""),
+    paragraph3: String(initialData?.paragraph3 || ""),
+    statYears: Number(initialData?.statYears ?? 15),
+    statProjects: Number(initialData?.statProjects ?? 50),
+    statSpecializations: Number(initialData?.statSpecializations ?? 3),
+    statSatisfaction: Number(initialData?.statSatisfaction ?? 100),
+    statYearsLabel: String(initialData?.statYearsLabel || "Years of Experience"),
+    statProjectsLabel: String(initialData?.statProjectsLabel || "Projects Completed"),
+    statSpecLabel: String(initialData?.statSpecLabel || "Core Specializations"),
+    statSatLabel: String(initialData?.statSatLabel || "Client Satisfaction %"),
   });
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(!!initialData);
 
+  // Skip fetch when we already have data from the batch endpoint
   useEffect(() => {
+    if (initialData) return;
     fetch("/api/about?_t=" + Date.now()).then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
