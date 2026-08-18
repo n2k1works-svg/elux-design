@@ -82,17 +82,34 @@ export async function GET() {
         db.siteSettings.findFirst({ where: { id: SITE_ID } }).catch(() => null),
       ]);
 
-    // Auto-seed if completely empty
-    if (
-      !about &&
-      services.length === 0 &&
-      projects.length === 0 &&
-      testimonials.length === 0
-    ) {
-      console.log("[/api/content] No data found, triggering seed...");
+    // If no active testimonials, try reactivating any that exist but are hidden
+    let finalTestimonials = testimonials;
+    if (finalTestimonials.length === 0) {
+      try {
+        const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
+        if (totalCount > 0) {
+          console.log(`[/api/content] Found ${totalCount} inactive testimonial(s), reactivating...`);
+          await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
+          finalTestimonials = await db.testimonial.findMany({
+            where: { site: SITE_ID, active: true },
+            orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+          });
+        }
+      } catch (e) {
+        console.error("[/api/content] Testimonial reactivation failed:", e);
+      }
+    }
+
+    // Auto-seed any empty collections individually.
+    // Previously only seeded when ALL data was empty — but if someone
+    // added projects via admin while testimonials were never seeded,
+    // the public site would show "No testimonials available" forever.
+    const needsSeed = !about || services.length === 0 || projects.length === 0 || finalTestimonials.length === 0;
+    if (needsSeed) {
+      console.log("[/api/content] Some collections empty, triggering seed...");
       await seedIfEmpty();
 
-      // Re-fetch after seed (single batch again)
+      // Re-fetch after seed
       const [sAbout, sServices, sProjects, sTestimonials, sSettings] =
         await Promise.all([
           db.aboutContent.findFirst({ where: { id: SITE_ID } }).catch(() => null),
@@ -115,7 +132,7 @@ export async function GET() {
       about,
       services,
       projects: stripHeavyImages(projects as Record<string, unknown>[]),
-      testimonials,
+      testimonials: finalTestimonials,
       settings,
     });
   } catch (err) {

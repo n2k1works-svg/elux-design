@@ -330,12 +330,15 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Fallback: if IntersectionObserver doesn't fire within 3s,
+    // show content anyway (prevents permanent invisibility)
+    const fallback = setTimeout(() => setInView(true), 3000);
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      ([entry]) => { if (entry.isIntersecting) { clearTimeout(fallback); setInView(true); } },
       { threshold }
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => { obs.disconnect(); clearTimeout(fallback); };
   }, [threshold]);
   return { ref, inView };
 }
