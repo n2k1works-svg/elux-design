@@ -134,10 +134,12 @@ const MIGRATE_TTL_MS = 60_000; // 60 seconds
 export async function ensureTablesExist() {
   const now = Date.now();
   if (now - _migratedAt < MIGRATE_TTL_MS) return;
-  // Batch all 6 CREATE TABLE IF NOT EXISTS into a single raw call
-  // These are all idempotent and safe to run together
-  const batch = Object.values(CREATE_TABLES).join(';\n');
-  await db.$executeRawUnsafe(batch);
+  // Run each CREATE TABLE IF NOT EXISTS individually.
+  // Prisma prepared statements do NOT support multi-statement SQL.
+  // But we skip ALTER COLUMN and information_schema — that's the heavy part.
+  await Promise.all(
+    Object.values(CREATE_TABLES).map((sql) => db.$executeRawUnsafe(sql))
+  );
   _migratedAt = Date.now();
 }
 
