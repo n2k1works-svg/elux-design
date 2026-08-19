@@ -4,17 +4,29 @@ import { PrismaClient } from '@prisma/client'
  * Neon's auto-added DATABASE_URL includes `channel_binding=require`
  * which is not supported by Prisma's query engine.
  * Strip it so Prisma can connect cleanly.
+ *
+ * Also adds:
+ * - connect_timeout=10 — prevents infinite hangs on slow networks
+ * - pgbouncer=true (if Neon) — enables connection pooling to avoid
+ *   exhausting the DB's connection limit on serverless cold starts
  */
 function cleanDatabaseUrl(url: string): string {
   let clean = url
     .replace(/channel_binding=[^&]*&?/g, '')  // remove channel_binding
     .replace(/[?&]$/, '');                     // clean trailing ? or &
 
-  // Add a 10-second connection timeout to prevent hangs on slow networks.
-  // This is critical for serverless where a hung connection blocks the
-  // entire request and can cascade to multi-minute waits.
+  const sep = clean.includes('?') ? '&' : '?';
+
+  // Connection timeout — fail fast instead of hanging for minutes
   if (!clean.includes('connect_timeout=')) {
-    clean += (clean.includes('?') ? '&' : '?') + 'connect_timeout=10';
+    clean += sep + 'connect_timeout=10';
+  }
+
+  // Neon connection pooling — route through PgBouncer to avoid
+  // connection limit exhaustion on serverless (many cold starts)
+  if (url.includes('.neon.tech') && !clean.includes('pgbouncer=')) {
+    // Replace the direct pooler port with the Pgbouncer pooler
+    clean = clean.replace('-pooler.', '-pgbouncer.');
   }
 
   return clean;
@@ -44,12 +56,9 @@ globalForPrisma.prisma = db
  * NOTE: ensureTablesExist() and ensureMigrated() have been REMOVED from
  * the hot path. Tables are created by the /api/seed endpoint (called once
  * during initial setup). Running CREATE TABLE IF NOT EXISTS on every
- * serverless cold start was causing 6 extra raw SQL round-trips per request,
- * which on slow connections compounded with Prisma engine init to cause
- * multi-minute load times.
+ * serverless cold start was causing 6 extra raw SQL round-trips per request.
  *
- * The functions below are kept ONLY for /api/seed and /api/debug — endpoints
- * that are called manually, not on every page load.
+ * The functions below are kept ONLY for /api/seed and /api/debug.
  */
 
 const CREATE_TABLES: Record<string, string> = {
@@ -128,8 +137,6 @@ const CREATE_TABLES: Record<string, string> = {
 
 /**
  * Ensure all tables exist. ONLY used by /api/seed and /api/debug.
- * DO NOT call this from read endpoints — it adds 6 raw SQL round-trips
- * per serverless cold start, which is the #1 cause of slow loads.
  */
 export async function ensureTablesExist() {
   const t0 = Date.now();
@@ -150,7 +157,6 @@ export async function ensureMigrated() {
   console.log('[ensureMigrated] Running migration checks...');
   const start = Date.now();
 
-  // Create tables
   for (const [table, createSql] of Object.entries(CREATE_TABLES)) {
     try {
       await db.$executeRawUnsafe(createSql);
@@ -159,7 +165,6 @@ export async function ensureMigrated() {
     }
   }
 
-  // Find and fix any extra NOT NULL columns from old schemas
   try {
     const extraCols = await db.$queryRawUnsafe<{
       table_name: string; column_name: string
@@ -192,3 +197,4 @@ export async function ensureMigrated() {
 
   console.log(`[ensureMigrated] Done in ${Date.now() - start}ms`);
 }
+

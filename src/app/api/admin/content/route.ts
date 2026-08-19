@@ -84,7 +84,7 @@ export async function GET() {
 
     const t2 = Date.now();
     console.log(
-      `[admin/content] total=${t2 - t0}ms (setup=${t1 - t0}ms, queries=${t2 - t1}ms)`
+      `[admin/content] total=${t2 - t0}ms auth=${t1 - t0}ms queries=${t2 - t1}ms projects=${projects.length} services=${services.length} testimonials=${testimonials.length}`
     );
 
     // Strip base64 images from project list to keep payload small
