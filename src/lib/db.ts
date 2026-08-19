@@ -6,9 +6,18 @@ import { PrismaClient } from '@prisma/client'
  * Strip it so Prisma can connect cleanly.
  */
 function cleanDatabaseUrl(url: string): string {
-  return url
+  let clean = url
     .replace(/channel_binding=[^&]*&?/g, '')  // remove channel_binding
     .replace(/[?&]$/, '');                     // clean trailing ? or &
+
+  // Add a 10-second connection timeout to prevent hangs on slow networks.
+  // This is critical for serverless where a hung connection blocks the
+  // entire request and can cascade to multi-minute waits.
+  if (!clean.includes('connect_timeout=')) {
+    clean += (clean.includes('?') ? '&' : '?') + 'connect_timeout=10';
+  }
+
+  return clean;
 }
 
 const databaseUrl = process.env.DATABASE_URL
@@ -26,28 +35,23 @@ export const db =
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
-
-/**
- * Columns the current Prisma schema expects on each table.
- * Any column NOT in this list that exists in the real DB is a leftover
- * from an older schema and must be made nullable so Prisma inserts
- * (which don't include it) don't hit NOT NULL violations.
- */
-const KNOWN_COLUMNS: Record<string, string[]> = {
-  Project: ['id','site','title','location','category','description','image','images','client','order','active','createdAt','updatedAt'],
-  Testimonial: ['id','site','quote','name','role','active','order','createdAt','updatedAt'],
-  Service: ['id','site','title','description','iconKey','order','active','createdAt','updatedAt'],
-  AboutContent: ['id','paragraph1','paragraph2','paragraph3','statYears','statProjects','statSpecializations','statSatisfaction','statYearsLabel','statProjectsLabel','statSpecLabel','statSatLabel','updatedAt'],
-  SiteSettings: ['id','phone','email','location','facebook','instagram','linkedin','adminPassword','updatedAt'],
-  LegalContent: ['type','site','content','lastUpdated','createdAt','updatedAt'],
-};
+// Cache the Prisma client globally in ALL environments to avoid
+// re-creating it on hot-reloads (dev) AND to reuse the connection
+// pool across warm serverless invocations (prod).
+globalForPrisma.prisma = db
 
 /*
- * CREATE TABLE statements — only used when the table doesn't exist yet.
- * Each is a single statement (Prisma prepared statements don't support
- * multiple commands in one call).
+ * NOTE: ensureTablesExist() and ensureMigrated() have been REMOVED from
+ * the hot path. Tables are created by the /api/seed endpoint (called once
+ * during initial setup). Running CREATE TABLE IF NOT EXISTS on every
+ * serverless cold start was causing 6 extra raw SQL round-trips per request,
+ * which on slow connections compounded with Prisma engine init to cause
+ * multi-minute load times.
+ *
+ * The functions below are kept ONLY for /api/seed and /api/debug — endpoints
+ * that are called manually, not on every page load.
  */
+
 const CREATE_TABLES: Record<string, string> = {
   Project: `CREATE TABLE IF NOT EXISTS "Project" (
     "id" TEXT NOT NULL PRIMARY KEY,
@@ -122,79 +126,40 @@ const CREATE_TABLES: Record<string, string> = {
   )`,
 };
 
-let _migratedAt = 0;
-const MIGRATE_TTL_MS = 60_000; // 60 seconds
-
 /**
- * Fast path for read-only endpoints (content, legal, sitemap).
- * Only runs CREATE TABLE IF NOT EXISTS for all 6 tables —
- * no ALTER COLUMN scans, no information_schema queries.
- * This reduces cold-start queries from ~36 to 1.
+ * Ensure all tables exist. ONLY used by /api/seed and /api/debug.
+ * DO NOT call this from read endpoints — it adds 6 raw SQL round-trips
+ * per serverless cold start, which is the #1 cause of slow loads.
  */
 export async function ensureTablesExist() {
-  const now = Date.now();
-  if (now - _migratedAt < MIGRATE_TTL_MS) return;
   const t0 = Date.now();
   try {
-    // Run each CREATE TABLE IF NOT EXISTS individually.
-    // Prisma prepared statements do NOT support multi-statement SQL.
-    // But we skip ALTER COLUMN and information_schema — that's the heavy part.
     await Promise.all(
       Object.values(CREATE_TABLES).map((sql) => db.$executeRawUnsafe(sql))
     );
-    _migratedAt = Date.now();
   } catch (e) {
-    // Tables likely already exist — log but don't throw.
-    // If tables genuinely don't exist, the subsequent Prisma query
-    // will fail with a clear error anyway.
     console.error('[ensureTablesExist] Warning (non-fatal):', e);
-    _migratedAt = Date.now(); // Still cache to avoid retrying on every request
   }
   console.log(`[ensureTablesExist] ${Date.now() - t0}ms`);
 }
 
 /**
- * Ensure database tables and columns match the current Prisma schema.
- *
- * Strategy:
- * 1. CREATE TABLE IF NOT EXISTS (safe no-op if table exists)
- * 2. ADD COLUMN IF NOT EXISTS for every expected column
- * 3. Query information_schema to find any extra NOT NULL columns
- *    left over from old schemas and make them nullable
- *
- * Cached for 60 seconds per serverless instance to avoid hammering
- * the DB with ~36 raw SQL queries on every single API request.
- * Each statement runs individually (Prisma prepared statements
- * don't support multiple commands in one call).
+ * Full migration — used ONLY by /api/seed and /api/debug.
  */
 export async function ensureMigrated() {
-  const now = Date.now();
-  if (now - _migratedAt < MIGRATE_TTL_MS) return;
-
   console.log('[ensureMigrated] Running migration checks...');
   const start = Date.now();
 
-  // Step 1 & 2: Create tables and add missing columns
+  // Create tables
   for (const [table, createSql] of Object.entries(CREATE_TABLES)) {
-    await db.$executeRawUnsafe(createSql);
-
-    // Add any missing columns
-    const known = KNOWN_COLUMNS[table] || [];
-    for (const col of known) {
-      // Skip id (primary key) and createdAt/updatedAt (managed by DB defaults)
-      if (col === 'id' || col === 'createdAt' || col === 'updatedAt') continue;
-      try {
-        await db.$executeRawUnsafe(
-          `ALTER TABLE "${table}" ADD COLUMN IF NOT EXISTS "${col}" TEXT NOT NULL DEFAULT ''`
-        );
-      } catch {
-        // Column might already exist with a different type — that's fine
-      }
+    try {
+      await db.$executeRawUnsafe(createSql);
+    } catch {
+      // Table likely exists
     }
   }
 
-  // Step 3: Find and fix any extra NOT NULL columns from old schemas
-  // These cause "Null constraint violation" when Prisma inserts without them
+  // Find and fix any extra NOT NULL columns from old schemas
   try {
     const extraCols = await db.$queryRawUnsafe<{
       table_name: string; column_name: string
@@ -223,9 +188,7 @@ export async function ensureMigrated() {
     }
   } catch (e) {
     console.error('[ensureMigrated] Extra column scan failed:', e);
-    // Don't throw — this is a best-effort cleanup
   }
 
-  _migratedAt = Date.now();
   console.log(`[ensureMigrated] Done in ${Date.now() - start}ms`);
 }

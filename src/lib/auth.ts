@@ -1,4 +1,4 @@
-import { db, ensureTablesExist } from "@/lib/db";
+import { db } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
@@ -72,9 +72,7 @@ export async function verifyPassword(plain: string, stored: string): Promise<boo
   }
   // Legacy: plain-text comparison + auto-migrate
   if (plain === stored) {
-    // Upgrade the stored password to a bcrypt hash
     try {
-      await ensureTablesExist();
       const hash = await hashPassword(plain);
       await db.siteSettings.update({
         where: { id: SITE_ID },
@@ -109,7 +107,6 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
-    await ensureTablesExist();
     let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
     if (!settings) {
       settings = await db.siteSettings.create({ data: { id: SITE_ID } });
@@ -155,7 +152,6 @@ export async function changePassword(
   currentPassword: string,
   newPassword: string,
 ): Promise<{ success: boolean; error?: string }> {
-  await ensureTablesExist();
   let settings = await db.siteSettings.findUnique({ where: { id: SITE_ID } });
   if (!settings) {
     settings = await db.siteSettings.create({ data: { id: SITE_ID } });

@@ -1318,12 +1318,14 @@ function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: 
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [bumpKey, setBumpKey] = useState(0);
 
-  // Single batch fetch — replaces 5 separate API calls that each
-  // triggered their own serverless cold start + DB connection.
+  // Single batch fetch with 30-second timeout.
+  // Uses AbortController to prevent infinite hangs on slow connections.
   useEffect(() => {
     let cancelled = false;
     setFetchError(null);
-    fetch("/api/admin/content?_t=" + Date.now())
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    fetch("/api/admin/content?_t=" + Date.now(), { signal: controller.signal })
       .then((r) => {
         if (r.status === 401) throw new Error("Session expired. Please log in again.");
         if (!r.ok) throw new Error(`Server error (${r.status})`);
@@ -1339,10 +1341,15 @@ function AdminDashboard({ onLogout, onClose }: { onLogout: () => void; onClose: 
       })
       .catch((err) => {
         if (cancelled) return;
-        console.error("[AdminDashboard] batch fetch failed:", err);
-        setFetchError(err.message || "Network error");
-      });
-    return () => { cancelled = true; };
+        if (err.name === "AbortError") {
+          setFetchError("Request timed out. Check your connection and try again.");
+        } else {
+          console.error("[AdminDashboard] batch fetch failed:", err);
+          setFetchError(err.message || "Network error");
+        }
+      })
+      .finally(() => clearTimeout(timeoutId));
+    return () => { cancelled = true; controller.abort(); clearTimeout(timeoutId); };
   }, [bumpKey]);
 
   const refreshData = useCallback(() => setBumpKey((k) => k + 1), []);

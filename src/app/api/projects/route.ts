@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureTablesExist } from "@/lib/db";
+import { db } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
-import { seedIfEmpty } from "@/app/api/seed/route";
 
 export const dynamic = "force-dynamic";
 
@@ -16,27 +15,15 @@ function parseImages(p: { images: string | null }): string[] {
 }
 
 export async function GET(req: NextRequest) {
- try {
-    await ensureTablesExist();
+  try {
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
-    // Showing hidden items requires authentication
     const showAll = all && (await isAuthenticated());
-    let projects = await db.project.findMany({
+    const projects = await db.project.findMany({
       where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    // Auto-seed if this site has no projects at all
-    if (projects.length === 0) {
-      console.log('[/api/projects] No projects found, triggering seed...');
-      await seedIfEmpty();
-      projects = await db.project.findMany({
-        where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
-        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      });
-    }
-    console.log(`[/api/projects] Returning ${projects.length} project(s)`);
-    // Strip heavy base64 images for list view — full images load on-demand
+    // Strip heavy base64 images for list view
     const light = projects.map((p) => {
       const img = p.image || "";
       const cover = img.startsWith("data:") && img.length > 20_000 ? "/project-1.png" : img;

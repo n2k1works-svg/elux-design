@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureTablesExist } from "@/lib/db";
+import { db } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
-import { seedIfEmpty } from "@/app/api/seed/route";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureTablesExist();
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
     const showAll = all && (await isAuthenticated());
@@ -16,23 +14,17 @@ export async function GET(req: NextRequest) {
       where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    // Auto-seed if this site has no testimonials at all
+    // If no active testimonials, reactivate any that exist but are hidden
     if (testimonials.length === 0) {
-      // Check if testimonials exist but are all inactive — reactivate them
       const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
       if (totalCount > 0) {
-        console.log(`[/api/testimonials] Found ${totalCount} inactive testimonial(s), reactivating...`);
         await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
-      } else {
-        console.log('[/api/testimonials] No testimonials found, triggering seed...');
-        await seedIfEmpty();
+        testimonials = await db.testimonial.findMany({
+          where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
+          orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+        });
       }
-      testimonials = await db.testimonial.findMany({
-        where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
-        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      });
     }
-    console.log(`[/api/testimonials] Returning ${testimonials.length} testimonial(s)`);
     return NextResponse.json(testimonials);
   } catch (err) {
     console.error('[/api/testimonials] GET failed:', err);

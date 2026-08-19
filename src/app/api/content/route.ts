@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, ensureTablesExist } from "@/lib/db";
+import { db } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
@@ -7,20 +7,12 @@ export const dynamic = "force-dynamic";
 
 /**
  * Single batched endpoint that returns ALL public-facing content
- * in one DB round trip. This replaces 6+ separate API calls
- * (about, services, projects, testimonials, settings) that each
- * incurred their own serverless cold-start + DB latency.
- *
- * STRIP base64 images from project responses — they bloat the
- * payload from ~10KB to 2MB+. The frontend only needs the first
- * image thumbnail for the card grid; full images load on-demand
- * via /api/projects/[id] when the user opens the lightbox.
+ * in one DB round trip. No ensureTablesExist() — tables are created
+ * by /api/seed during initial setup.
  */
 function stripHeavyImages(projects: Record<string, unknown>[]) {
   return projects.map((p) => {
     const img = String(p.image || "");
-    // For the images array: only keep non-base64 entries.
-    // The lightbox falls back to [project.image] when images is empty.
     const images: string[] = [];
     try {
       const parsed = p.images ? JSON.parse(String(p.images)) : [];
@@ -30,8 +22,6 @@ function stripHeavyImages(projects: Record<string, unknown>[]) {
         }
       }
     } catch { /* ignore */ }
-    // Keep cover image if it's a URL or small base64 (<50KB).
-    // Large base64 cover → placeholder (frontend shows fallback image).
     const cover = img.startsWith("data:") && img.length > 50_000
       ? "/project-1.png"
       : img;
@@ -45,70 +35,41 @@ function stripHeavyImages(projects: Record<string, unknown>[]) {
 
 export async function GET() {
   try {
-    await ensureTablesExist();
-
-    // Fire all queries in parallel — one cold start, one migration check,
-    // but all DB reads happen concurrently
+    // NO ensureTablesExist() — go straight to queries.
+    // If tables don't exist, Prisma will error and we return empty data.
     const [about, services, projects, testimonials, settings] =
       await Promise.all([
-        // About
         db.aboutContent.findFirst({ where: { id: SITE_ID } }).catch(() => null),
-
-        // Services
         db.service
           .findMany({
             where: { site: SITE_ID, active: true },
             orderBy: [{ order: "asc" }, { createdAt: "desc" }],
           })
           .catch(() => []),
-
-        // Projects
         db.project
           .findMany({
             where: { site: SITE_ID, active: true },
             orderBy: [{ order: "asc" }, { createdAt: "desc" }],
           })
           .catch(() => []),
-
-        // Testimonials
         db.testimonial
           .findMany({
             where: { site: SITE_ID, active: true },
             orderBy: [{ order: "asc" }, { createdAt: "desc" }],
           })
           .catch(() => []),
-
-        // Settings
         db.siteSettings.findFirst({ where: { id: SITE_ID } }).catch(() => null),
       ]);
 
-    // If no active testimonials, try reactivating any that exist but are hidden
-    let finalTestimonials = testimonials;
-    if (finalTestimonials.length === 0) {
+    // If ALL collections are empty, trigger seed once
+    const allEmpty = !about && services.length === 0 && projects.length === 0 && testimonials.length === 0;
+    if (allEmpty) {
+      console.log("[/api/content] All collections empty, triggering seed...");
       try {
-        const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
-        if (totalCount > 0) {
-          console.log(`[/api/content] Found ${totalCount} inactive testimonial(s), reactivating...`);
-          await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
-          finalTestimonials = await db.testimonial.findMany({
-            where: { site: SITE_ID, active: true },
-            orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-          });
-        }
+        await seedIfEmpty();
       } catch (e) {
-        console.error("[/api/content] Testimonial reactivation failed:", e);
+        console.error("[/api/content] Seed failed:", e);
       }
-    }
-
-    // Auto-seed any empty collections individually.
-    // Previously only seeded when ALL data was empty — but if someone
-    // added projects via admin while testimonials were never seeded,
-    // the public site would show "No testimonials available" forever.
-    const needsSeed = !about || services.length === 0 || projects.length === 0 || finalTestimonials.length === 0;
-    if (needsSeed) {
-      console.log("[/api/content] Some collections empty, triggering seed...");
-      await seedIfEmpty();
-
       // Re-fetch after seed
       const [sAbout, sServices, sProjects, sTestimonials, sSettings] =
         await Promise.all([
@@ -126,6 +87,23 @@ export async function GET() {
         testimonials: sTestimonials,
         settings: sSettings,
       });
+    }
+
+    // Reactivate inactive testimonials if no active ones exist
+    let finalTestimonials = testimonials;
+    if (finalTestimonials.length === 0) {
+      try {
+        const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
+        if (totalCount > 0) {
+          await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
+          finalTestimonials = await db.testimonial.findMany({
+            where: { site: SITE_ID, active: true },
+            orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+          });
+        }
+      } catch (e) {
+        console.error("[/api/content] Testimonial reactivation failed:", e);
+      }
     }
 
     return NextResponse.json({

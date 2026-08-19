@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, ensureTablesExist } from "@/lib/db";
+import { db } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -46,9 +46,6 @@ export async function GET() {
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Single migration check for the whole batch
-    await ensureTablesExist();
 
     const t1 = Date.now();
 

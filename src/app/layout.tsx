@@ -180,7 +180,7 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var c=window.__eluxCache||null;var k='elux-site-data';var raw=sessionStorage.getItem(k);if(raw){var p=JSON.parse(raw);if(Date.now()-p.ts<30000){c=p.d}}window.__eluxCache=c;fetch('/api/content?_t='+Date.now()).then(function(r){return r.json()}).then(function(d){if(d&&typeof d==='object'&&!('error' in d)){sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),d:d}));window.__eluxCache=d}}).catch(function(){})}catch(e){}})()`,
+            __html: `(function(){try{var c=window.__eluxCache||null;var k='elux-site-data';var raw=sessionStorage.getItem(k);if(raw){var p=JSON.parse(raw);if(Date.now()-p.ts<30000){c=p.d}}window.__eluxCache=c;var ac=new AbortController();var t=setTimeout(function(){ac.abort()},15000);fetch('/api/content?_t='+Date.now(),{signal:ac.signal}).then(function(r){clearTimeout(t);return r.json()}).then(function(d){if(d&&typeof d==='object'&&!('error' in d)){sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),d:d}));window.__eluxCache=d}}).catch(function(){clearTimeout(t)})}catch(e){}})()`,
           }}
         />
       </head>
