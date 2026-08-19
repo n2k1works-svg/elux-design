@@ -5,28 +5,16 @@ import { PrismaClient } from '@prisma/client'
  * which is not supported by Prisma's query engine.
  * Strip it so Prisma can connect cleanly.
  *
- * Also adds:
- * - connect_timeout=10 — prevents infinite hangs on slow networks
- * - pgbouncer=true (if Neon) — enables connection pooling to avoid
- *   exhausting the DB's connection limit on serverless cold starts
+ * Also adds connect_timeout=10 to prevent infinite hangs.
  */
 function cleanDatabaseUrl(url: string): string {
   let clean = url
     .replace(/channel_binding=[^&]*&?/g, '')  // remove channel_binding
     .replace(/[?&]$/, '');                     // clean trailing ? or &
 
-  const sep = clean.includes('?') ? '&' : '?';
-
   // Connection timeout — fail fast instead of hanging for minutes
   if (!clean.includes('connect_timeout=')) {
-    clean += sep + 'connect_timeout=10';
-  }
-
-  // Neon connection pooling — route through PgBouncer to avoid
-  // connection limit exhaustion on serverless (many cold starts)
-  if (url.includes('.neon.tech') && !clean.includes('pgbouncer=')) {
-    // Replace the direct pooler port with the Pgbouncer pooler
-    clean = clean.replace('-pooler.', '-pgbouncer.');
+    clean += (clean.includes('?') ? '&' : '?') + 'connect_timeout=10';
   }
 
   return clean;
