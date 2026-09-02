@@ -522,23 +522,29 @@ function HeroSection() {
 }
 
 /* ---------- About ---------- */
-function AboutSection({ about, refreshKey, loading }: { about: Partial<AboutContentT> | null; refreshKey: number; loading: boolean }) {
+function AboutSection({ about: _about, refreshKey, loading }: { about: Partial<AboutContentT> | null; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView();
-  const count1 = useCountUp(about?.statYears ?? 0, 1800, inView);
-  const count2 = useCountUp(about?.statProjects ?? 0, 2000, inView);
-  const count3 = useCountUp(about?.statSpecializations ?? 0, 1200, inView);
-  const count4 = useCountUp(about?.statSatisfaction ?? 0, 2200, inView);
+  const [localAbout, setLocalAbout] = useState(_about);
 
-  // After admin edits, refetch just about from batch endpoint
-  const [localAbout, setLocalAbout] = useState(about);
+  // Sync props → state when data arrives
   useEffect(() => {
-    if (refreshKey === 0) return; // initial load already has data
+    if (_about && _about.statYears) setLocalAbout(_about);
+  }, [_about]);
+
+  // After admin edits, refetch fresh about data
+  useEffect(() => {
+    if (refreshKey === 0) return;
     fetch("/api/content?_t=" + Date.now())
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((data: SiteData) => { if (data.about) setLocalAbout(data.about); })
       .catch(() => {});
   }, [refreshKey]);
-  const a = refreshKey === 0 ? about : localAbout;
+
+  const about = localAbout;
+  const count1 = useCountUp(about?.statYears ?? 0, 1800, inView);
+  const count2 = useCountUp(about?.statProjects ?? 0, 2000, inView);
+  const count3 = useCountUp(about?.statSpecializations ?? 0, 1200, inView);
+  const count4 = useCountUp(about?.statSatisfaction ?? 0, 2200, inView);
 
   if (loading) return <AboutSkeleton />;
 
@@ -556,19 +562,19 @@ function AboutSection({ about, refreshKey, loading }: { about: Partial<AboutCont
         </div>
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div className={`transition-all duration-500 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph1}</p>
-            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{a?.paragraph2}</p>
-            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{a?.paragraph3}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph1}</p>
+            <p className="text-[#F5F0E8]/80 leading-relaxed mb-6 font-light">{about?.paragraph2}</p>
+            <p className="text-[#F5F0E8]/60 leading-relaxed font-light">{about?.paragraph3}</p>
           </div>
           <div className={`transition-all duration-500 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="liquid-glass-strong rounded-2xl p-8 space-y-8">
-              <StatItem number={`${count1}+`} label={a?.statYearsLabel ?? ""} />
+              <StatItem number={`${count1}+`} label={about?.statYearsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count2}+`} label={a?.statProjectsLabel ?? ""} />
+              <StatItem number={`${count2}+`} label={about?.statProjectsLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count3}`} label={a?.statSpecLabel ?? ""} />
+              <StatItem number={`${count3}`} label={about?.statSpecLabel ?? ""} />
               <div className="section-divider" />
-              <StatItem number={`${count4}%`} label={a?.statSatLabel ?? ""} />
+              <StatItem number={`${count4}%`} label={about?.statSatLabel ?? ""} />
             </div>
           </div>
         </div>
@@ -590,6 +596,12 @@ function StatItem({ number, label }: { number: string; label: string }) {
 function ServicesSection({ services: initialServices, refreshKey, loading }: { services: ServiceT[]; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView();
   const [services, setServices] = useState(initialServices);
+
+  // Sync props → state when data arrives
+  useEffect(() => {
+    if (initialServices.length > 0) setServices(initialServices);
+  }, [initialServices]);
+
   useEffect(() => {
     if (refreshKey === 0) return;
     fetch("/api/content?_t=" + Date.now())
@@ -698,6 +710,11 @@ function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { p
   const [projects, setProjects] = useState(initialProjects);
   const [page, setPage] = useState(0);
   const PER_PAGE_DESKTOP = 3;
+
+  // Sync props → state when data arrives
+  useEffect(() => {
+    if (initialProjects.length > 0) setProjects(initialProjects);
+  }, [initialProjects]);
 
   useEffect(() => {
     if (refreshKey === 0) return;
@@ -898,6 +915,12 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey, lo
   const { ref, inView } = useInView(0.15);
   const [active, setActive] = useState(0);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
+
+  // Sync props → state when data arrives
+  useEffect(() => {
+    if (initialTestimonials.length > 0) setTestimonials(initialTestimonials);
+  }, [initialTestimonials]);
+
   useEffect(() => {
     if (refreshKey === 0) return;
     fetch("/api/content?_t=" + Date.now())
@@ -999,6 +1022,11 @@ function ContactSection({ settings: initialSettings, serviceTitles, loading }: {
   const { ref, inView } = useInView();
   const [submitted, setSubmitted] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
+
+  // Sync props → state when data arrives
+  useEffect(() => {
+    if (initialSettings.phone || initialSettings.email) setSettings(initialSettings);
+  }, [initialSettings]);
 
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");

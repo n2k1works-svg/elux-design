@@ -80,12 +80,13 @@ export async function GET() {
           db.siteSettings.findFirst({ where: { id: SITE_ID } }).catch(() => null),
         ]);
 
+      const { adminPassword: _ap2, ...safeSettings2 } = (sSettings || {}) as Record<string, unknown>;
       return NextResponse.json({
         about: sAbout,
         services: sServices,
         projects: stripHeavyImages(sProjects),
         testimonials: sTestimonials,
-        settings: sSettings,
+        settings: safeSettings2,
       });
     }
 
@@ -106,12 +107,13 @@ export async function GET() {
       }
     }
 
+    const { adminPassword: _ap, ...safeSettings } = (settings || {}) as Record<string, unknown>;
     return NextResponse.json({
       about,
       services,
       projects: stripHeavyImages(projects as Record<string, unknown>[]),
       testimonials: finalTestimonials,
-      settings,
+      settings: safeSettings,
     });
   } catch (err) {
     console.error("[/api/content] GET failed:", err);
