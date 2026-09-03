@@ -524,23 +524,50 @@ select.form-input-glass option {
 }
 
 /* === PROCESS TIMELINE === */
+/* On desktop (md+), the 4 process cards sit side-by-side in a horizontal grid.
+   The original ::before created a vertical line going DOWN through each card's
+   body — which overlapped the description text and looked like an artifact.
+   It also was hidden on :last-child, creating visual inconsistency between
+   cards 1-3 (with line) and card 4 (without).
+
+   New approach:
+   - Hide the vertical line entirely on desktop (horizontal layout doesn't need it)
+   - On mobile (single-column stack), restore the vertical line so it connects
+     one card to the next, but cap its length so it doesn't bleed through the
+     description text — it should stop just below the circle.
+*/
 .process-step {
   position: relative;
 }
 
-.process-step::before {
-  content: '';
-  position: absolute;
-  top: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1px;
-  height: calc(100% - 28px);
-  background: linear-gradient(180deg, rgba(201, 168, 76, 0.4), rgba(201, 168, 76, 0.05));
+/* Desktop (md+): horizontal layout — no vertical line through cards */
+@media (min-width: 768px) {
+  .process-step::before {
+    content: none;
+  }
 }
 
-.process-step:last-child::before {
-  display: none;
+/* Mobile (<768px): vertical stack — short connector from circle to next card.
+   Line starts just below the circle (which sits at ~28px from top of step)
+   and extends down 60px to visually link to the next step in the stack.
+   Hidden on last child (no next step to connect to). */
+@media (max-width: 767px) {
+  .process-step::before {
+    content: '';
+    position: absolute;
+    top: 72px;              /* just below the 56px circle + 16px gap */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 60px;            /* fixed length — doesn't bleed through description */
+    background: linear-gradient(180deg, rgba(201, 168, 76, 0.4), rgba(201, 168, 76, 0.05));
+    z-index: 0;              /* behind the liquid-glass card */
+    pointer-events: none;
+  }
+
+  .process-step:last-child::before {
+    content: none;
+  }
 }
 
 /* === HERO IMAGE GLASS === */
