@@ -338,10 +338,26 @@ function ContactSkeleton() {
    ======================================================================== */
 
 function useInView(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
+  // Use a callback ref + state instead of useRef. With useRef, when a section
+  // first renders its <Skeleton/> (because loading=true), the ref'd div is not
+  // in the DOM, the useEffect runs and returns early, and the IntersectionObserver
+  // is never set up. When loading later becomes false and the ref'd div mounts,
+  // the useEffect does NOT re-run (its deps haven't changed), so content stays
+  // opacity-0 forever.
+  //
+  // The callback ref pattern below tracks the element via state, so when the
+  // element mounts, `el` changes from null → Element, and the effect re-runs.
+  const [el, setEl] = useState<HTMLElement | null>(null);
   const [inView, setInView] = useState(false);
+
+  // Stable callback ref — React calls this with the node on mount and null on unmount.
+  const ref = useCallback((node: HTMLElement | null) => {
+    setEl(node);
+    // Reset inView when the element changes (e.g., on remount after loading)
+    if (!node) setInView(false);
+  }, []);
+
   useEffect(() => {
-    const el = ref.current;
     if (!el) return;
     // Fallback: if IntersectionObserver doesn't fire within 3s,
     // show content anyway (prevents permanent invisibility)
@@ -352,7 +368,7 @@ function useInView(threshold = 0.15) {
     );
     obs.observe(el);
     return () => { obs.disconnect(); clearTimeout(fallback); };
-  }, [threshold]);
+  }, [el, threshold]);
   return { ref, inView };
 }
 
