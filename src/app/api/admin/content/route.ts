@@ -16,7 +16,6 @@ export const dynamic = "force-dynamic";
 function stripHeavyImages(projects: Record<string, unknown>[]) {
   return projects.map((p) => {
     const img = String(p.image || "");
-    // For the images array: keep URLs, strip base64
     const images: string[] = [];
     try {
       const parsed = p.images ? JSON.parse(String(p.images)) : [];
@@ -26,14 +25,13 @@ function stripHeavyImages(projects: Record<string, unknown>[]) {
         }
       }
     } catch { /* ignore */ }
-    // Cover: keep URL or small base64 (<20KB), else placeholder
     const cover = img.startsWith("data:") && img.length > 20_000
       ? "/project-1.png"
       : img;
     return {
       ...p,
       image: cover,
-      images: JSON.stringify(images),
+      images, // Already a string[] — no need to stringify + re-parse
     };
   });
 }
@@ -88,19 +86,14 @@ export async function GET() {
     );
 
     // Strip base64 images from project list to keep payload small
+    // stripHeavyImages already returns images as string[]
     const lightProjects = stripHeavyImages(projects as Record<string, unknown>[]);
-
-    // Parse project images array for frontend convenience
-    const parsedProjects = lightProjects.map((p) => ({
-      ...p,
-      images: JSON.parse(String(p.images)),
-    }));
 
     // Remove password from settings
     const { adminPassword: _ap, ...safeSettings } = (settings || {}) as Record<string, unknown>;
 
     return NextResponse.json({
-      projects: parsedProjects,
+      projects: lightProjects,
       services,
       testimonials,
       settings: safeSettings,

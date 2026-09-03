@@ -28,9 +28,26 @@ function stripHeavyImages(projects: Record<string, unknown>[]) {
     return {
       ...p,
       image: cover,
-      images: JSON.stringify(images),
+      images: images,
     };
   });
+}
+
+/** Parse the images field from JSON string → array for frontend consumption */
+function parseProjectImages(projects: Record<string, unknown>[]) {
+  return projects.map((p) => ({
+    ...p,
+    images: typeof p.images === "string" ? safeJsonParse(p.images) : Array.isArray(p.images) ? p.images : [],
+  }));
+}
+
+function safeJsonParse(val: string): unknown[] {
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function GET() {
@@ -84,7 +101,7 @@ export async function GET() {
       return NextResponse.json({
         about: sAbout,
         services: sServices,
-        projects: stripHeavyImages(sProjects),
+        projects: parseProjectImages(stripHeavyImages(sProjects as Record<string, unknown>[])),
         testimonials: sTestimonials,
         settings: safeSettings2,
       });
@@ -111,7 +128,7 @@ export async function GET() {
     return NextResponse.json({
       about,
       services,
-      projects: stripHeavyImages(projects as Record<string, unknown>[]),
+      projects: parseProjectImages(stripHeavyImages(projects as Record<string, unknown>[])),
       testimonials: finalTestimonials,
       settings: safeSettings,
     });

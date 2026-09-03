@@ -14,7 +14,7 @@ type ProjectT = {
   category: string;
   description: string;
   image: string;
-  images: string[];
+  images: string[] | string; // API may return string (JSON) or parsed array
   order: number;
   active: boolean;
 };
@@ -90,6 +90,19 @@ const NAV_LINKS = [
   { label: "Testimonials", href: "#testimonials" },
   { label: "Contact", href: "#contact" },
 ] as const;
+
+/** Safely resolve project.images to a string[] (handles JSON string or array) */
+function resolveImages(project: ProjectT): string[] {
+  const raw = project.images;
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+  if (typeof raw === "string" && raw.length > 0) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((x): x is string => typeof x === "string");
+    } catch { /* ignore */ }
+  }
+  return [];
+}
 
 /* ---------- Service icon map (iconKey → SVG) ---------- */
 function ServiceIcon({ iconKey, className = "w-8 h-8" }: { iconKey: string; className?: string }) {
@@ -760,7 +773,7 @@ function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { p
                 style={{ transitionDelay: `${(i + 1) * 80}ms` }}
                 onClick={() => setSelectedProject(selectedProject === i ? null : i)}
               >
-                <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={(src) => { const all = project.images?.length ? project.images : [project.image]; setLightboxImages(all); setLightboxIndex(all.indexOf(src) >= 0 ? all.indexOf(src) : 0); setLightboxImage(src); }} />
+                <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={(src) => { const all = resolveImages(project).length ? resolveImages(project) : [project.image]; setLightboxImages(all); setLightboxIndex(all.indexOf(src) >= 0 ? all.indexOf(src) : 0); setLightboxImage(src); }} />
               </div>
             ))}
           </div>
@@ -779,7 +792,7 @@ function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { p
                     style={{ width: 'calc(33.333% - 1rem)' }}
                     onClick={() => setSelectedProject(selectedProject === i ? null : i)}
                   >
-                    <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={(src) => { const all = project.images?.length ? project.images : [project.image]; setLightboxImages(all); setLightboxIndex(all.indexOf(src) >= 0 ? all.indexOf(src) : 0); setLightboxImage(src); }} />
+                    <ProjectCardContent project={project} index={i} selected={selectedProject === i} onSelect={setSelectedProject} onImageClick={(src) => { const all = resolveImages(project).length ? resolveImages(project) : [project.image]; setLightboxImages(all); setLightboxIndex(all.indexOf(src) >= 0 ? all.indexOf(src) : 0); setLightboxImage(src); }} />
                   </div>
                 ))}
               </div>
@@ -866,7 +879,7 @@ function ProjectCardContent({ project, index, selected, onSelect, onImageClick }
   onSelect: (i: number | null) => void;
   onImageClick: (src: string) => void;
 }) {
-  const allImages = project.images?.length ? project.images : [project.image];
+  const allImages = resolveImages(project).length ? resolveImages(project) : [project.image];
   const [cardImgIndex, setCardImgIndex] = useState(0);
   const currentImg = allImages[cardImgIndex] || project.image;
 
@@ -1696,7 +1709,7 @@ function ProjectFormModal({ project, onClose, onSaved, onError }: {
   const [category, setCategory] = useState(project?.category || "");
   const [description, setDescription] = useState(project?.description || "");
   const [image, setImage] = useState(project?.image || "");
-  const [images, setImages] = useState<string[]>(project?.images || []);
+  const [images, setImages] = useState<string[]>(Array.isArray(project?.images) ? project.images : typeof project?.images === 'string' ? (() => { try { const p = JSON.parse(project.images); return Array.isArray(p) ? p : []; } catch { return []; } })() : []);
   const [order, setOrder] = useState(project?.order ?? 0);
   const [active, setActive] = useState(project?.active ?? true);
   const [saving, setSaving] = useState(false);
