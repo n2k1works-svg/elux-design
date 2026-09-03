@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureMigrated } from "@/lib/db";
 import { SITE_ID } from "@/lib/site";
 import { seedIfEmpty } from "@/app/api/seed/route";
 
@@ -78,11 +78,17 @@ export async function GET() {
         db.siteSettings.findFirst({ where: { id: SITE_ID } }).catch(() => null),
       ]);
 
-    // If ALL collections are empty, trigger seed once
+    // If ALL collections are empty, trigger seed once.
+    // IMPORTANT: ensureMigrated() runs first so the tables actually exist
+    // before seedIfEmpty() tries to INSERT into them. Without this, on a
+    // fresh database the seed silently fails (each INSERT throws, gets
+    // caught by per-block try/catch, logs an error, and the user sees a
+    // blank site with no diagnostics).
     const allEmpty = !about && services.length === 0 && projects.length === 0 && testimonials.length === 0;
     if (allEmpty) {
       console.log("[/api/content] All collections empty, triggering seed...");
       try {
+        await ensureMigrated();
         await seedIfEmpty();
       } catch (e) {
         console.error("[/api/content] Seed failed:", e);

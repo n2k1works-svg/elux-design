@@ -65,7 +65,7 @@ export async function GET() {
         dbUrl: process.env.DATABASE_URL
           ? process.env.DATABASE_URL.replace(/\/\/[^:]+:[^@]+@/, "//[REDACTED]@")
           : "NOT SET",
-        neonPooler: process.env.DATABASE_URL?.includes('-pgbouncer.') ? 'YES' : 'NO',
+        neonPooler: process.env.DATABASE_URL?.includes('-pooler.') ? 'YES' : 'NO',
       },
       note: "Hit this twice — first is cold start (slow), second is warm (fast). Compare the two to see cold start overhead.",
     });

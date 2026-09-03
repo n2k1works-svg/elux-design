@@ -89,6 +89,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    // Don't leak internal error details to the client — log server-side only.
+    // Resend/Next.js error messages can expose API keys, internal paths, or
+    // infrastructure details that attackers could use for reconnaissance.
+    console.error("[/api/contact] POST failed:", e);
+    return NextResponse.json(
+      { error: "Failed to send message. Please try again later." },
+      { status: 500 },
+    );
   }
 }

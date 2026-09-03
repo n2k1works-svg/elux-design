@@ -746,7 +746,19 @@ function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { p
     setPage(p);
     setSelectedProject(null);
   };
-  // All projects rendered in a single flex row — carousel handles visibility
+  // All projects rendered in a single flex row — carousel handles visibility.
+  //
+  // BUG FIX: translateX must be expressed as a percentage of the FLEX
+  // CONTAINER's width, not the parent's. The container holds ALL projects
+  // in one row (so it's ~N× wider than the parent), meaning `translateX(-100%)`
+  // would slide the entire container off-screen on page 1.
+  //
+  // One "page" = 3 items = ~100% of parent width.
+  // Container width = projects.length × (1/3 of parent) ≈ projects.length/3 × 100% of parent.
+  // So one page-advance as a fraction of container = 100% parent ÷ (projects.length/3 × 100% parent)
+  //                                           = 3 / projects.length × 100% of container.
+  // Therefore translateX per page = page × (300 / projects.length)%.
+  const translatePct = projects.length > 0 ? (page * 300) / projects.length : 0;
 
   return (
     <>
@@ -783,7 +795,7 @@ function ProjectsSection({ projects: initialProjects, refreshKey, loading }: { p
             <div className="overflow-hidden">
               <div
                 className="flex gap-6 transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${page * 100}%)` }}
+                style={{ transform: `translateX(-${translatePct}%)` }}
               >
                 {projects.map((project, i) => (
                   <div
@@ -1031,15 +1043,42 @@ function TestimonialsSection({ testimonials: initialTestimonials, refreshKey, lo
 }
 
 /* ---------- Contact ---------- */
-function ContactSection({ settings: initialSettings, serviceTitles, loading }: { settings: SettingsT; serviceTitles: string[]; loading: boolean }) {
+function ContactSection({ settings: initialSettings, serviceTitles, refreshKey, loading }: { settings: SettingsT; serviceTitles: string[]; refreshKey: number; loading: boolean }) {
   const { ref, inView } = useInView();
   const [submitted, setSubmitted] = useState(false);
+  // Local state synced from props — same pattern as About/Services/Projects/Testimonials sections.
+  // The refreshKey-based refetch below is the belt-and-suspenders fallback that ensures
+  // admin edits appear immediately when the admin panel closes, even if the parent's
+  // prop update chain has a stale-reference issue.
   const [settings, setSettings] = useState(initialSettings);
 
-  // Always sync props → state when data changes (no conditional gate)
+  // Sync props → state when the parent passes new data.
   useEffect(() => {
     setSettings(initialSettings);
   }, [initialSettings]);
+
+  // After admin edits, refetch fresh data directly. This matches the pattern used by
+  // AboutSection/ServicesSection/ProjectsSection/TestimonialsSection. Without this,
+  // ContactSection was the ONLY section that didn't refetch on admin-close, causing
+  // it to show stale (or empty) contact info while every other section updated.
+  useEffect(() => {
+    if (refreshKey === 0) return;
+    fetch("/api/content?_t=" + Date.now())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((data: SiteData) => {
+        if (data?.settings) {
+          setSettings({
+            phone: data.settings.phone ?? "",
+            email: data.settings.email ?? "",
+            location: data.settings.location ?? "",
+            facebook: data.settings.facebook ?? "",
+            instagram: data.settings.instagram ?? "",
+            linkedin: data.settings.linkedin ?? "",
+          });
+        }
+      })
+      .catch(() => {});
+  }, [refreshKey]);
 
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
@@ -2146,6 +2185,10 @@ function AdminSettingsTab({ initialData, onDataChange }: { initialData?: Partial
         throw new Error(data.error || "Save failed");
       }
       showToast("Settings saved.");
+      // Notify parent so the admin dashboard's initialData refreshes.
+      // Without this, the dashboard's cached settings stay stale until the
+      // panel is closed and reopened.
+      onDataChange?.();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Save failed.", "error");
     } finally {
@@ -2508,6 +2551,7 @@ function AdminAboutTab({ initialData, onDataChange }: { initialData?: Partial<Ab
       });
       if (!r.ok) throw new Error();
       showToast("About section updated.");
+      onDataChange?.();
     } catch {
       showToast("Failed to save.", "error");
     } finally { setSaving(false); }
@@ -2683,7 +2727,7 @@ export default function HomePage() {
         <div className="section-divider" />
         <TestimonialsSection testimonials={data?.testimonials ?? []} refreshKey={refreshKey} loading={loading} />
         <div className="section-divider" />
-        <ContactSection settings={settings} serviceTitles={serviceTitles} loading={loading} />
+        <ContactSection settings={settings} serviceTitles={serviceTitles} refreshKey={refreshKey} loading={loading} />
       </main>
       <Footer settings={settings} />
       <BackToTop />
