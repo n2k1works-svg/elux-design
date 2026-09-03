@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type FormEvent, type DragEvent } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type FormEvent, type DragEvent } from "react";
 import Image from "next/image";
 
 /* ========================================================================
@@ -539,9 +539,9 @@ function AboutSection({ about: _about, refreshKey, loading }: { about: Partial<A
   const { ref, inView } = useInView();
   const [localAbout, setLocalAbout] = useState(_about);
 
-  // Sync props → state when data arrives
+  // Sync props → state when data changes
   useEffect(() => {
-    if (_about && _about.statYears) setLocalAbout(_about);
+    if (_about) setLocalAbout(_about);
   }, [_about]);
 
   // After admin edits, refetch fresh about data
@@ -1036,9 +1036,9 @@ function ContactSection({ settings: initialSettings, serviceTitles, loading }: {
   const [submitted, setSubmitted] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
 
-  // Sync props → state when data arrives
+  // Always sync props → state when data changes (no conditional gate)
   useEffect(() => {
-    if (initialSettings.phone || initialSettings.email) setSettings(initialSettings);
+    setSettings(initialSettings);
   }, [initialSettings]);
 
   const [sending, setSending] = useState(false);
@@ -2654,14 +2654,14 @@ export default function HomePage() {
     return () => window.removeEventListener("keydown", handler);
   }, [closeAdmin]);
 
-  const settings: SettingsT = {
+  const settings: SettingsT = useMemo(() => ({
     phone: data?.settings?.phone ?? "",
     email: data?.settings?.email ?? "",
     location: data?.settings?.location ?? "",
     facebook: data?.settings?.facebook ?? "",
     instagram: data?.settings?.instagram ?? "",
     linkedin: data?.settings?.linkedin ?? "",
-  };
+  }), [data?.settings?.phone, data?.settings?.email, data?.settings?.location, data?.settings?.facebook, data?.settings?.instagram, data?.settings?.linkedin]);
   const serviceTitles = (data?.services ?? []).map((s) => s.title);
 
   return (
