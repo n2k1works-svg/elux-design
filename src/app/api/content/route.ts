@@ -113,29 +113,12 @@ export async function GET() {
       });
     }
 
-    // Reactivate inactive testimonials if no active ones exist
-    let finalTestimonials = testimonials;
-    if (finalTestimonials.length === 0) {
-      try {
-        const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
-        if (totalCount > 0) {
-          await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
-          finalTestimonials = await db.testimonial.findMany({
-            where: { site: SITE_ID, active: true },
-            orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-          });
-        }
-      } catch (e) {
-        console.error("[/api/content] Testimonial reactivation failed:", e);
-      }
-    }
-
     const { adminPassword: _ap, ...safeSettings } = (settings || {}) as Record<string, unknown>;
     return NextResponse.json({
       about,
       services,
       projects: parseProjectImages(stripHeavyImages(projects as Record<string, unknown>[])),
-      testimonials: finalTestimonials,
+      testimonials,
       settings: safeSettings,
     });
   } catch (err) {

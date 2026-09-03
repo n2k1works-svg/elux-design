@@ -10,21 +10,14 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const all = url.searchParams.get("all") === "1";
     const showAll = all && (await isAuthenticated());
-    let testimonials = await db.testimonial.findMany({
+    const testimonials = await db.testimonial.findMany({
       where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    // If no active testimonials, reactivate any that exist but are hidden
-    if (testimonials.length === 0) {
-      const totalCount = await db.testimonial.count({ where: { site: SITE_ID } });
-      if (totalCount > 0) {
-        await db.testimonial.updateMany({ where: { site: SITE_ID, active: false }, data: { active: true } });
-        testimonials = await db.testimonial.findMany({
-          where: { site: SITE_ID, ...(showAll ? {} : { active: true }) },
-          orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-        });
-      }
-    }
+    // NOTE: A previous version of this route auto-reactivated hidden
+    // testimonials if no active ones existed. That fought admin intent —
+    // hiding all testimonials should leave the public list empty.
+    // The TestimonialsSection component handles the empty case gracefully.
     return NextResponse.json(testimonials);
   } catch (err) {
     console.error('[/api/testimonials] GET failed:', err);
