@@ -1,8 +1,30 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 const SITE_URL = "https://www.eluxfiji.com";
+
+// next/font self-hosts these fonts at build time. The font files are
+// downloaded once during the build, then served from /_next/static/media/
+// on the same domain. This eliminates the Google Fonts CDN dependency
+// entirely (no more 404s when Google rotates their CDN URLs, no third-party
+// request delay, no privacy concerns from leaking visitor IPs to Google).
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal"],
+  display: "swap",
+  variable: "--font-cormorant",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700"],
+  style: ["normal"],
+  display: "swap",
+  variable: "--font-outfit",
+});
 
 export const metadata: Metadata = {
   title: "Elux Design | Architect & Building Design | Nadi, Fiji",
@@ -171,7 +193,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${cormorant.variable} ${outfit.variable}`}>
       <head>
         <link rel="preconnect" href="/api/content" />
         <script
