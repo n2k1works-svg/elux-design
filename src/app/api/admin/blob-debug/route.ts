@@ -23,7 +23,7 @@ export async function GET() {
 
   // Try to list blobs (limited to 1) to verify the token actually works
   // against the connected store.
-  let listResult: { ok: boolean; error?: string; count?: number } = {};
+  let listResult: { ok: boolean; error?: string; count?: number } = { ok: false };
   try {
     const result = await list({ limit: 1 });
     listResult = { ok: true, count: result.blobs.length };
