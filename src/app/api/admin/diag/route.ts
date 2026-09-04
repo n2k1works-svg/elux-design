@@ -66,6 +66,11 @@ export async function GET() {
           ? process.env.DATABASE_URL.replace(/\/\/[^:]+:[^@]+@/, "//[REDACTED]@")
           : "NOT SET",
         neonPooler: process.env.DATABASE_URL?.includes('-pooler.') ? 'YES' : 'NO',
+        authSecret: {
+          isSet: !!process.env.AUTH_SECRET,
+          isFallback: process.env.AUTH_SECRET === "fallback-dev-only-change-me",
+          length: process.env.AUTH_SECRET?.length || 0,
+        },
       },
       note: "Hit this twice — first is cold start (slow), second is warm (fast). Compare the two to see cold start overhead.",
     });
