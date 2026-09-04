@@ -106,13 +106,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("[POST /api/upload]", err);
-    // TEMPORARY: expose the actual error message to help diagnose the
-    // Vercel Blob integration. Will be tightened back to "Upload failed."
-    // once we confirm what's going wrong.
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { error: "Upload failed.", detail: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Upload failed." }, { status: 500 });
   }
 }
