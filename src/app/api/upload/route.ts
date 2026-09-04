@@ -79,11 +79,29 @@ export async function POST(req: NextRequest) {
     // all Next.js server runtimes — Node.js edge doesn't have File.)
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const blob = await put(filename, buffer, {
-      access: "public",
-      addRandomSuffix: false, // we already added a random suffix above
-      contentType: file.type,
-    });
+    let blob;
+    try {
+      blob = await put(filename, buffer, {
+        access: "public",
+        addRandomSuffix: false, // we already added a random suffix above
+        contentType: file.type,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Vercel Blob throws this when the store is configured as "Private access"
+      // but the code requests `access: "public"`. Project images need to be
+      // publicly readable so the website can render them without signed URLs.
+      if (msg.includes("private access") || msg.includes("private store")) {
+        return NextResponse.json(
+          {
+            error:
+              "The Vercel Blob store is configured as Private. Go to Vercel dashboard → Stores → elux-uploads → Settings → change Access to Public. Project images must be publicly readable to display on the website.",
+          },
+          { status: 500 },
+        );
+      }
+      throw e; // re-throw to be caught by outer handler
+    }
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
